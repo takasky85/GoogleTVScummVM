@@ -127,7 +127,15 @@ jobs:
           FLAGS=$(grep -v '^#' ../build/configure-flags.txt | tr '\n' ' ')
           echo "configure flags: $FLAGS" | tee ../build.log
           ../scummvm/configure --host=android-arm-v7a --disable-debug --enable-release $FLAGS 2>&1 | tee -a ../build.log
-          make -j"$(nproc)" androidrelease 2>&1 | tee -a ../build.log
+          # Gradle downloads its tools from Maven Central, which sometimes answers 429 (too many requests).
+          # The compiled native code is kept between attempts, so a retry is quick.
+          ok=0
+          for attempt in 1 2 3 4; do
+            if make -j"$(nproc)" androidrelease 2>&1 | tee -a ../build.log; then ok=1; break; fi
+            echo "make failed (attempt $attempt), retrying in 90 seconds" | tee -a ../build.log
+            sleep 90
+          done
+          [ "$ok" = 1 ]
 
       - name: Sign APK
         run: |
