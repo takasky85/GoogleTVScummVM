@@ -11,6 +11,8 @@ Current patches:
 
 3. `0003-use-builtin-folder-browser.patch`: "Add Game" always uses ScummVM's own folder browser instead of the Android system picker, which does not exist on Android TV. This is what caused "you don't have an app that can do this".
 
+4. `0004-storage-check-dialog.patch`: temporary. Shows a "Storage check" popup on launch with the Android version, whether All files access is on, and what the app can see in Downloads. Remove once game finding works.
+
 The workflow also builds Ogg and Vorbis from source so Ogg audio works.
 
 Planned next:

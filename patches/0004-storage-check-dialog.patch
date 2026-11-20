@@ -1,0 +1,104 @@
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+index e4d6785c..4393209f 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+@@ -1348,26 +1348,75 @@ public class ScummVMActivity extends Activity {
+ 	// TV build: Android TV has no system folder picker ("you don't have an app that can do this"),
+ 	// so ask for "All files access" once per launch. That lets ScummVM browse /sdcard/Download directly.
+ 	private boolean _askedAllFilesAccess = false;
++	private boolean _shownStorageCheck = false;
+ 
+-	private void ensureAllFilesAccess() {
+-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || _askedAllFilesAccess) {
++	// Temporary diagnostics for TV testing: shows what the app can actually see on this device.
++	private void showStorageCheck() {
++		if (_shownStorageCheck) {
+ 			return;
+ 		}
++		_shownStorageCheck = true;
++
++		StringBuilder sb = new StringBuilder();
++		try {
++			sb.append("TV patches: v4 (storage check)\n");
++			sb.append("Android API ").append(Build.VERSION.SDK_INT).append("\n");
++			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
++				sb.append("All files access: ").append(Environment.isExternalStorageManager() ? "YES" : "NO").append("\n");
++			}
++			boolean picker = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).resolveActivity(getPackageManager()) != null;
++			sb.append("System folder picker: ").append(picker ? "yes" : "no").append("\n\n");
++
++			String[] paths = {"/sdcard/Download", "/storage/emulated/0/Download", "/sdcard"};
++			for (String path : paths) {
++				File f = new File(path);
++				String[] names = f.list();
++				sb.append(path).append("\n  exists=").append(f.exists())
++					.append(" dir=").append(f.isDirectory())
++					.append(" canRead=").append(f.canRead())
++					.append(" entries=").append(names == null ? "none (no access)" : String.valueOf(names.length)).append("\n");
++				if (names != null) {
++					Arrays.sort(names);
++					for (int i = 0; i < names.length && i < 5; i++) {
++						sb.append("   ").append(names[i]).append("\n");
++					}
++				}
++			}
++
++			sb.append("\nScummVM storage list:\n");
++			for (String s : ExternalStorage.getAllStorageLocations(getApplicationContext())) {
++				sb.append("  ").append(s).append("\n");
++			}
++		} catch (Exception e) {
++			sb.append("\nError: ").append(e);
++		}
++
++		new AlertDialog.Builder(this)
++			.setTitle("Storage check")
++			.setMessage(sb.toString())
++			.setPositiveButton(android.R.string.ok, null)
++			.show();
++	}
++
++	private boolean ensureAllFilesAccess() {
++		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || _askedAllFilesAccess) {
++			return false;
++		}
+ 		if (Environment.isExternalStorageManager()) {
+-			return;
++			return false;
+ 		}
+ 		_askedAllFilesAccess = true;
+ 
+ 		try {
+ 			startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+ 				Uri.parse("package:" + getPackageName())));
+-			return;
++			return true;
+ 		} catch (Exception e) {
+ 			Log.d(ScummVM.LOG_TAG, "No per-app all-files-access screen: " + e);
+ 		}
+ 		try {
+ 			startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+-			return;
++			return true;
+ 		} catch (Exception e) {
+ 			Log.d(ScummVM.LOG_TAG, "No all-files-access screen: " + e);
+ 		}
+@@ -1381,6 +1430,7 @@ public class ScummVMActivity extends Activity {
+ 				+ "Then restart this app.")
+ 			.setPositiveButton(android.R.string.ok, null)
+ 			.show();
++		return true;
+ 	}
+ 
+ 	@Override
+@@ -1393,7 +1443,9 @@ public class ScummVMActivity extends Activity {
+ 
+ 		CompatHelpers.HideSystemStatusBar.hide(getWindow());
+ 
+-		ensureAllFilesAccess();
++		if (!ensureAllFilesAccess()) {
++			showStorageCheck();
++		}
+ 
+ 		if (_scummvm != null)
+ 			_scummvm.setPause(false);
