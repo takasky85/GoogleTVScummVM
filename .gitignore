@@ -3,3 +3,7 @@ build-android/
 build.log
 *.apk
 *.aab
+oboe-src/
+oboe-build/
+oboe-prefix/
+oboe.log

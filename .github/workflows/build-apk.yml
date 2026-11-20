@@ -24,6 +24,7 @@ jobs:
     env:
       SCUMMVM_REF: ${{ inputs.scummvm_ref || 'v2026.4.0' }}
       NDK_VERSION: 23.2.8568313
+      OBOE_REF: 1.9.3
     defaults:
       run:
         shell: bash
@@ -66,9 +67,30 @@ jobs:
             git -C scummvm apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p"
           done
 
+      # ScummVM's Android audio code needs Google's Oboe library, which is not in the NDK.
+      # Build it from source as a static library for 32-bit ARM.
+      - name: Build Oboe audio library (armeabi-v7a)
+        run: |
+          set -o pipefail
+          git clone --depth 1 --branch "$OBOE_REF" https://github.com/google/oboe oboe-src
+          cmake -S oboe-src -B oboe-build \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=armeabi-v7a \
+            -DANDROID_PLATFORM=android-16 \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 2>&1 | tee oboe.log
+          cmake --build oboe-build -j"$(nproc)" 2>&1 | tee -a oboe.log
+          mkdir -p oboe-prefix/include oboe-prefix/lib
+          cp -r oboe-src/include/oboe oboe-prefix/include/
+          cp "$(find oboe-build -name 'liboboe.a' | head -n 1)" oboe-prefix/lib/
+          ls -l oboe-prefix/lib
+
       - name: Configure and build (armeabi-v7a)
         run: |
           set -o pipefail
+          export CXXFLAGS="-I$GITHUB_WORKSPACE/oboe-prefix/include"
+          export LDFLAGS="-L$GITHUB_WORKSPACE/oboe-prefix/lib"
           mkdir build-android
           cd build-android
           FLAGS=$(grep -v '^#' ../build/configure-flags.txt | tr '\n' ' ')
@@ -123,6 +145,9 @@ jobs:
             echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             echo "commit: $GITHUB_SHA"
           } > /tmp/logrepo/status.txt
+          if [ -f oboe.log ]; then
+            tail -n 80 oboe.log > /tmp/logrepo/oboe-tail.txt
+          fi
           if [ -f build.log ]; then
             head -n 150 build.log > /tmp/logrepo/head.txt
             tail -n 400 build.log > /tmp/logrepo/tail.txt
