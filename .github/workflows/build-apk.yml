@@ -142,7 +142,7 @@ jobs:
           # gcc-only optimisation flags that clang rejects
           sed -i 's/-fforce-mem//; s/-fthread-jumps//; s/-fcse-follow-jumps//; s/-fstrength-reduce//; s/-frerun-cse-after-loop//; s/-fschedule-insns2//' configure
           TC="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          ./configure --host=arm-linux-androideabi --prefix="$P" \
+          ./configure --build=x86_64-linux-gnu --host=arm-linux-gnueabi --prefix="$P" \
             --enable-static --disable-shared --disable-debugging --enable-fpm=64bit \
             CC="$TC/armv7a-linux-androideabi16-clang" AR="$TC/llvm-ar" RANLIB="$TC/llvm-ranlib" \
             CFLAGS="-O3 -fPIC" 2>&1 | tee ../mad.log
