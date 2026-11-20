@@ -32,3 +32,4 @@ delay before speech.)
 Ogg Vorbis clips up to 8 MB (Sam & Max speech lines, effects) are read fully into memory before decoding,
 and bigger streams (music) get a 256 KB read buffer, so slow Android shared-storage reads can't stall the
 audio thread.
+
