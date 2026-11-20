@@ -7,3 +7,10 @@ oboe-src/
 oboe-build/
 oboe-prefix/
 oboe.log
+deps-prefix/
+ogg-src/
+ogg-build/
+vorbis-src/
+vorbis-build/
+ogg.log
+vorbis.log

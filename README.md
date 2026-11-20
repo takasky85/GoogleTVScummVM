@@ -32,5 +32,5 @@ and installs over the previous one. Anyone can sign an APK with it, so do not tr
 
 ## Known limitations of the first builds
 
-- Built without third-party codec libraries (Ogg Vorbis, MP3, FLAC). Original game files work, but ripped CD-audio music files may not play.
+- Ogg Vorbis audio is supported. MP3 and FLAC are not built in yet.
 - Stock ScummVM behaviour on TVs (4K rendering, mouse handling, game finding) is not fixed yet; see `patches/README.md` for the plan.

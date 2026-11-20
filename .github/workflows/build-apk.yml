@@ -25,6 +25,8 @@ jobs:
       SCUMMVM_REF: ${{ inputs.scummvm_ref || 'v2026.4.0' }}
       NDK_VERSION: 23.2.8568313
       OBOE_REF: 1.9.3
+      OGG_REF: v1.3.5
+      VORBIS_REF: v1.3.7
     defaults:
       run:
         shell: bash
@@ -81,16 +83,45 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 2>&1 | tee oboe.log
           cmake --build oboe-build -j"$(nproc)" 2>&1 | tee -a oboe.log
-          mkdir -p oboe-prefix/include oboe-prefix/lib
-          cp -r oboe-src/include/oboe oboe-prefix/include/
-          cp "$(find oboe-build -name 'liboboe.a' | head -n 1)" oboe-prefix/lib/
-          ls -l oboe-prefix/lib
+          mkdir -p deps-prefix/include deps-prefix/lib
+          cp -r oboe-src/include/oboe deps-prefix/include/
+          cp "$(find oboe-build -name 'liboboe.a' | head -n 1)" deps-prefix/lib/
+          ls -l deps-prefix/lib
+
+      # Ogg Vorbis support (needed for ripped CD-audio music and compressed game audio).
+      - name: Build Ogg and Vorbis libraries (armeabi-v7a)
+        run: |
+          set -o pipefail
+          P="$GITHUB_WORKSPACE/deps-prefix"
+          COMMON=(
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake"
+            -DANDROID_ABI=armeabi-v7a
+            -DANDROID_PLATFORM=android-16
+            -DBUILD_SHARED_LIBS=OFF
+            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -DCMAKE_INSTALL_PREFIX="$P"
+          )
+          git clone --depth 1 --branch "$OGG_REF" https://github.com/xiph/ogg ogg-src
+          cmake -S ogg-src -B ogg-build "${COMMON[@]}" -DINSTALL_DOCS=OFF 2>&1 | tee ogg.log
+          cmake --build ogg-build -j"$(nproc)" 2>&1 | tee -a ogg.log
+          cmake --install ogg-build 2>&1 | tee -a ogg.log
+          git clone --depth 1 --branch "$VORBIS_REF" https://github.com/xiph/vorbis vorbis-src
+          cmake -S vorbis-src -B vorbis-build "${COMMON[@]}" \
+            -DCMAKE_FIND_ROOT_PATH="$P" \
+            -DOGG_INCLUDE_DIR="$P/include" \
+            -DOGG_LIBRARY="$P/lib/libogg.a" \
+            -DINSTALL_DOCS=OFF 2>&1 | tee vorbis.log
+          cmake --build vorbis-build -j"$(nproc)" 2>&1 | tee -a vorbis.log
+          cmake --install vorbis-build 2>&1 | tee -a vorbis.log
+          ls -l "$P/lib" "$P/include"
 
       - name: Configure and build (armeabi-v7a)
         run: |
           set -o pipefail
-          export CXXFLAGS="-I$GITHUB_WORKSPACE/oboe-prefix/include"
-          export LDFLAGS="-L$GITHUB_WORKSPACE/oboe-prefix/lib"
+          export CXXFLAGS="-I$GITHUB_WORKSPACE/deps-prefix/include"
+          export LDFLAGS="-L$GITHUB_WORKSPACE/deps-prefix/lib"
           mkdir build-android
           cd build-android
           FLAGS=$(grep -v '^#' ../build/configure-flags.txt | tr '\n' ' ')
@@ -145,9 +176,12 @@ jobs:
             echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
             echo "commit: $GITHUB_SHA"
           } > /tmp/logrepo/status.txt
-          if [ -f oboe.log ]; then
-            tail -n 80 oboe.log > /tmp/logrepo/oboe-tail.txt
+          if [ -f build.log ]; then
+            grep -i -E "checking for (ogg|vorbis|tremor)|Vorbis file support|oboe" build.log | head -n 10 >> /tmp/logrepo/status.txt
           fi
+          for f in oboe ogg vorbis; do
+            if [ -f "$f.log" ]; then tail -n 80 "$f.log" > "/tmp/logrepo/$f-tail.txt"; fi
+          done
           if [ -f build.log ]; then
             head -n 150 build.log > /tmp/logrepo/head.txt
             tail -n 400 build.log > /tmp/logrepo/tail.txt

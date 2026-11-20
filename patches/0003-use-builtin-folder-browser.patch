@@ -1,0 +1,15 @@
+diff --git a/gui/browser.cpp b/gui/browser.cpp
+index eab0c38f..73bac349 100644
+--- a/gui/browser.cpp
++++ b/gui/browser.cpp
+@@ -86,7 +86,9 @@ BrowserDialog::BrowserDialog(const Common::U32String &title, bool dirBrowser)
+ }
+ 
+ int BrowserDialog::runModal() {
+-#if defined(USE_SYSDIALOGS)
++	// TV build (ANDROID_BACKEND): always use ScummVM's own folder browser. Android TV has no
++	// system folder picker, so the native dialog only ever shows "you don't have an app that can do this".
++#if defined(USE_SYSDIALOGS) && !defined(ANDROID_BACKEND)
+ 	// Try to use the backend browser
+ 	Common::DialogManager *dialogManager = g_system->getDialogManager();
+ 	if (dialogManager) {
