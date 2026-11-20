@@ -27,3 +27,6 @@ Targets crackle/static in the sound (seen with Sam & Max's Ogg `.sog` speech): s
 Oboe stream, ~250 ms ring buffer ahead of the output, producer thread wakes every >=20 ms instead of
 every few ms, and the producer thread asks for audio priority. Costs a little audio latency (not
 noticeable in these games).
+
+Update to 0006: the first version buffered ~250 ms and caused a noticeable delay before speech. It now
+uses a ~100 ms buffer with the stock low-latency stream.

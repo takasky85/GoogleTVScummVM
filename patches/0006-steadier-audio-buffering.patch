@@ -1,5 +1,5 @@
 diff --git a/backends/mixer/android/android-mixer.cpp b/backends/mixer/android/android-mixer.cpp
-index 61a57afe..f8710a48 100644
+index 61a57afe..d69a825e 100644
 --- a/backends/mixer/android/android-mixer.cpp
 +++ b/backends/mixer/android/android-mixer.cpp
 @@ -23,6 +23,9 @@
@@ -12,19 +12,7 @@ index 61a57afe..f8710a48 100644
  #include <time.h>
  
  #include <android/log.h>
-@@ -141,8 +144,9 @@ void AndroidMixerManagerImpl::initStream() {
- 
- 	builder.setDirection(oboe::Direction::Output)
- 		//->setAudioApi(oboe::AudioApi::OpenSLES)
--		->setSharingMode(oboe::SharingMode::Exclusive)
--		->setPerformanceMode(oboe::PerformanceMode::LowLatency)
-+		// TV boxes: favour glitch-free audio over latency (SCUMM games don't need low latency)
-+		->setSharingMode(oboe::SharingMode::Shared)
-+		->setPerformanceMode(oboe::PerformanceMode::None)
- 		->setChannelConversionAllowed(true)
- 		->setChannelCount(oboe::ChannelCount::Stereo)
- 		->setFormatConversionAllowed(true)
-@@ -175,11 +179,10 @@ void AndroidMixerManagerImpl::initStream() {
+@@ -175,14 +178,11 @@ void AndroidMixerManagerImpl::initStream() {
  	// Configure the RingBuffer using full buffer capacity to make sure we can provide the requested samples
  	size_t bufferCapacity = stream->getBufferCapacityInFrames();
  
@@ -33,20 +21,24 @@ index 61a57afe..f8710a48 100644
 -		// This is not really enough so we can get several consecutive callbacks which drain the ring buffer
 -		// Instead of using bigger bursts, increase here the ring buffer size up to ~150ms
 -		size_t minCapacity = sampleRate / 6;
+-		if (bufferCapacity < minCapacity) {
+-			bufferCapacity = minCapacity;
+-		}
 +	{
-+		// Keep ~250ms of mixed audio buffered ahead so that Ogg Vorbis decoding or a busy CPU
-+		// can't starve the output callback (heard as static/crackle).
-+		size_t minCapacity = sampleRate / 4;
- 		if (bufferCapacity < minCapacity) {
- 			bufferCapacity = minCapacity;
- 		}
-@@ -204,7 +207,12 @@ void AndroidMixerManagerImpl::initStream() {
++		// Keep ~100ms of mixed audio buffered ahead: enough that Ogg Vorbis decoding or a busy CPU
++		// can't starve the output (static), small enough that speech still starts promptly.
++		// A bigger buffer than this adds a noticeable delay before characters talk.
++		bufferCapacity = sampleRate / 10;
+ 	}
+ 
+ 	if (!_buffer) {
+@@ -204,7 +204,12 @@ void AndroidMixerManagerImpl::initStream() {
  		_mixer->setOutputBufSize(chunkSize);
  	}
  
 -	stream->setBufferSizeInFrames(chunkSize);
 +	{
-+		size_t target = chunkSize * 4;
++		size_t target = chunkSize * 2;
 +		if (target > (size_t)stream->getBufferCapacityInFrames())
 +			target = stream->getBufferCapacityInFrames();
 +		stream->setBufferSizeInFrames(target);
@@ -54,7 +46,7 @@ index 61a57afe..f8710a48 100644
  	_chunkSize = chunkSize;
  
  	_latency = new oboe::LatencyTuner(*stream);
-@@ -274,6 +282,9 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+@@ -274,6 +279,9 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
  	AndroidMixerManagerImpl *this_ = (AndroidMixerManagerImpl *)arg;
  	Audio::MixerImpl *mixer = this_->_mixer;
  
@@ -64,19 +56,19 @@ index 61a57afe..f8710a48 100644
  	std::shared_ptr<oboe::AudioStream> stream = this_->_stream_ptr;
  	this_->_stream.store(stream.get());
  
-@@ -284,8 +295,10 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+@@ -284,8 +292,10 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
  	size_t silence_count = 0;
  
  	struct timespec tv_chunk, tv_silence;
 -	// We try to fill half by half
-+	// Produce in chunks of at least 20ms so the thread wakes up less often
-+	const size_t minChunk = sampleRate / 50;
++	// Produce in chunks of at least 10ms so the thread wakes up less often
++	const size_t minChunk = sampleRate / 100;
  	size_t chunkSize = this_->_chunkSize / 2;
 +	if (chunkSize < minChunk) chunkSize = minChunk;
  	samples_to_ts(&tv_chunk, chunkSize, sampleRate);
  
  	// Variables of Android P/Q worakaround for AAudio
-@@ -301,6 +314,7 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+@@ -301,6 +311,7 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
  		stream = this_->_stream_ptr;                                   \
  		this_->_stream.store(stream.get());                            \
  		chunkSize = this_->_chunkSize / 2;                             \

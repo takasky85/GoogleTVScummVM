@@ -117,6 +117,39 @@ jobs:
           cmake --install vorbis-build 2>&1 | tee -a vorbis.log
           ls -l "$P/lib" "$P/include"
 
+      # MP3 (libmad) and FLAC support: compressed speech/music files made with ScummVM's
+      # compression tools, and ripped CD audio tracks. Optional: a failure here must not
+      # block the build, ScummVM's configure just leaves the format out.
+      - name: Build MP3 and FLAC libraries (armeabi-v7a)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          P="$GITHUB_WORKSPACE/deps-prefix"
+          git clone --depth 1 --branch 1.5.0 https://github.com/xiph/flac flac-src
+          cmake -S flac-src -B flac-build \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-16 \
+            -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DCMAKE_INSTALL_PREFIX="$P" \
+            -DWITH_OGG=OFF -DBUILD_CXXLIBS=OFF -DBUILD_PROGRAMS=OFF -DBUILD_EXAMPLES=OFF \
+            -DBUILD_TESTING=OFF -DBUILD_DOCS=OFF -DINSTALL_MANPAGES=OFF 2>&1 | tee flac.log
+          cmake --build flac-build -j"$(nproc)" 2>&1 | tee -a flac.log
+          cmake --install flac-build 2>&1 | tee -a flac.log
+          ls -l "$P/lib"
+          git clone --depth 1 https://github.com/markjeee/libmad mad-src
+          cd mad-src
+          # gcc-only optimisation flags that clang rejects
+          sed -i 's/-fforce-mem//; s/-fthread-jumps//; s/-fcse-follow-jumps//; s/-fstrength-reduce//; s/-frerun-cse-after-loop//; s/-fschedule-insns2//' configure
+          TC="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          ./configure --host=arm-linux-androideabi --prefix="$P" \
+            --enable-static --disable-shared --disable-debugging --enable-fpm=64bit \
+            CC="$TC/armv7a-linux-androideabi16-clang" AR="$TC/llvm-ar" RANLIB="$TC/llvm-ranlib" \
+            CFLAGS="-O3 -fPIC" 2>&1 | tee ../mad.log
+          make -j"$(nproc)" 2>&1 | tee -a ../mad.log
+          make install 2>&1 | tee -a ../mad.log
+          ls -l "$P/lib" "$P/include"
+
       - name: Configure and build (armeabi-v7a)
         run: |
           set -o pipefail
@@ -190,9 +223,9 @@ jobs:
             echo "commit: $GITHUB_SHA"
           } > /tmp/logrepo/status.txt
           if [ -f build.log ]; then
-            grep -i -E "checking for (ogg|vorbis|tremor)|Vorbis file support|oboe" build.log | head -n 10 >> /tmp/logrepo/status.txt
+            grep -i -E "checking for (ogg|vorbis|tremor|mad|flac)|Vorbis file support|MP3|FLAC|oboe" build.log | head -n 16 >> /tmp/logrepo/status.txt
           fi
-          for f in oboe ogg vorbis; do
+          for f in oboe ogg vorbis flac mad; do
             if [ -f "$f.log" ]; then tail -n 80 "$f.log" > "/tmp/logrepo/$f-tail.txt"; fi
           done
           if [ -f build.log ]; then
