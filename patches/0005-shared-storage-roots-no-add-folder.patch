@@ -1,0 +1,88 @@
+diff --git a/backends/fs/android/android-fs-factory.cpp b/backends/fs/android/android-fs-factory.cpp
+index 0c260f98..ca6145bd 100644
+--- a/backends/fs/android/android-fs-factory.cpp
++++ b/backends/fs/android/android-fs-factory.cpp
+@@ -98,8 +98,8 @@ void AndroidFilesystemFactory::getSAFTrees(AbstractFSList &list, bool allowSAFad
+ }
+ 
+ bool AndroidFilesystemFactory::Config::getDrives(AbstractFSList &list, bool hidden) const {
+-	// For SAF
+-	_factory->getSAFTrees(list, true);
++	// For SAF. TV build: no "Add folder" entry, because the system folder picker does not work on Android TV.
++	_factory->getSAFTrees(list, false);
+ 
+ 	list.reserve(list.size() + _storages.size() / 2);
+ 
+diff --git a/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java b/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java
+index ada9d6bf..1bf219e7 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java
++++ b/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java
+@@ -544,6 +544,23 @@ public class ExternalStorage {
+ 			}
+ 		}
+ 
++		// TV build: always offer shared storage and its Download folder as starting points.
++		// (Android 11+ no longer lists them above, and the system folder picker does not work on TV.)
++		File sharedStorage = Environment.getExternalStorageDirectory();
++		if (sharedStorage != null && sharedStorage.isDirectory()) {
++			String sharedPath = sharedStorage.getAbsolutePath();
++			if (!map.contains(sharedPath)) {
++				map.add(0, sharedPath);
++				map.add(0, "Internal storage");
++			}
++			File downloadsDir = new File(sharedStorage, "Download");
++			String downloadsPath = downloadsDir.getAbsolutePath();
++			if (downloadsDir.isDirectory() && !map.contains(downloadsPath)) {
++				map.add(0, downloadsPath);
++				map.add(0, "Downloads");
++			}
++		}
++
+ 		return map;
+ 	}
+ }
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+index 4393209f..aeff4879 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+@@ -1443,9 +1443,7 @@ public class ScummVMActivity extends Activity {
+ 
+ 		CompatHelpers.HideSystemStatusBar.hide(getWindow());
+ 
+-		if (!ensureAllFilesAccess()) {
+-			showStorageCheck();
+-		}
++		ensureAllFilesAccess();
+ 
+ 		if (_scummvm != null)
+ 			_scummvm.setPause(false);
+diff --git a/gui/browser.cpp b/gui/browser.cpp
+index 73bac349..4cd5fd77 100644
+--- a/gui/browser.cpp
++++ b/gui/browser.cpp
+@@ -112,11 +112,20 @@ void BrowserDialog::open() {
+ 		_node = Common::FSNode(ConfMan.getPath("browser_lastpath"));
+ 
+ #ifdef ANDROID_BACKEND
+-	// TV build: start in the Downloads folder, where game files usually are.
+-	if (!_node.isDirectory()) {
+-		Common::FSNode downloads("/sdcard/Download");
+-		if (downloads.exists() && downloads.isDirectory())
+-			_node = downloads;
++	// TV build: start in shared storage (normally Downloads, where game files are),
++	// unless the last used folder is already somewhere inside it.
++	{
++		Common::String last;
++		if (_node.isValid())
++			last = _node.getPath().toString('/');
++		bool inSharedStorage = last.hasPrefix("/storage/emulated/") || last.hasPrefix("/sdcard");
++		if (!inSharedStorage) {
++			Common::FSNode downloads("/storage/emulated/0/Download");
++			if (!(downloads.exists() && downloads.isDirectory()))
++				downloads = Common::FSNode("/sdcard/Download");
++			if (downloads.exists() && downloads.isDirectory())
++				_node = downloads;
++		}
+ 	}
+ #endif
+ 
