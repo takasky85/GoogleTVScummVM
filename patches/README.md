@@ -21,3 +21,9 @@ Planned next:
 3. Render to a fixed 1080p or 720p surface so 4K TVs do not make ScummVM draw at 3840x2160.
 4. Make mouse input work on Android TV (including mice that report as trackballs).
 5. Auto-scan Downloads for supported games and show a simple grid.
+
+## 0006-steadier-audio-buffering.patch
+Targets crackle/static in the sound (seen with Sam & Max's Ogg `.sog` speech): shared, non-low-latency
+Oboe stream, ~250 ms ring buffer ahead of the output, producer thread wakes every >=20 ms instead of
+every few ms, and the producer thread asks for audio priority. Costs a little audio latency (not
+noticeable in these games).

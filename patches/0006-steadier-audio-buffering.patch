@@ -1,0 +1,86 @@
+diff --git a/backends/mixer/android/android-mixer.cpp b/backends/mixer/android/android-mixer.cpp
+index 61a57afe..f8710a48 100644
+--- a/backends/mixer/android/android-mixer.cpp
++++ b/backends/mixer/android/android-mixer.cpp
+@@ -23,6 +23,9 @@
+ #define FORBIDDEN_SYMBOL_EXCEPTION_time_h
+ 
+ #include <sys/time.h>
++#include <sys/resource.h>
++#include <sys/syscall.h>
++#include <unistd.h>
+ #include <time.h>
+ 
+ #include <android/log.h>
+@@ -141,8 +144,9 @@ void AndroidMixerManagerImpl::initStream() {
+ 
+ 	builder.setDirection(oboe::Direction::Output)
+ 		//->setAudioApi(oboe::AudioApi::OpenSLES)
+-		->setSharingMode(oboe::SharingMode::Exclusive)
+-		->setPerformanceMode(oboe::PerformanceMode::LowLatency)
++		// TV boxes: favour glitch-free audio over latency (SCUMM games don't need low latency)
++		->setSharingMode(oboe::SharingMode::Shared)
++		->setPerformanceMode(oboe::PerformanceMode::None)
+ 		->setChannelConversionAllowed(true)
+ 		->setChannelCount(oboe::ChannelCount::Stereo)
+ 		->setFormatConversionAllowed(true)
+@@ -175,11 +179,10 @@ void AndroidMixerManagerImpl::initStream() {
+ 	// Configure the RingBuffer using full buffer capacity to make sure we can provide the requested samples
+ 	size_t bufferCapacity = stream->getBufferCapacityInFrames();
+ 
+-	if (streamApi == oboe::AudioApi::OpenSLES) {
+-		// With OpenSL ES, Oboe has 2 buffers of size defined by Java (AudioTrack or AudioManager)
+-		// This is not really enough so we can get several consecutive callbacks which drain the ring buffer
+-		// Instead of using bigger bursts, increase here the ring buffer size up to ~150ms
+-		size_t minCapacity = sampleRate / 6;
++	{
++		// Keep ~250ms of mixed audio buffered ahead so that Ogg Vorbis decoding or a busy CPU
++		// can't starve the output callback (heard as static/crackle).
++		size_t minCapacity = sampleRate / 4;
+ 		if (bufferCapacity < minCapacity) {
+ 			bufferCapacity = minCapacity;
+ 		}
+@@ -204,7 +207,12 @@ void AndroidMixerManagerImpl::initStream() {
+ 		_mixer->setOutputBufSize(chunkSize);
+ 	}
+ 
+-	stream->setBufferSizeInFrames(chunkSize);
++	{
++		size_t target = chunkSize * 4;
++		if (target > (size_t)stream->getBufferCapacityInFrames())
++			target = stream->getBufferCapacityInFrames();
++		stream->setBufferSizeInFrames(target);
++	}
+ 	_chunkSize = chunkSize;
+ 
+ 	_latency = new oboe::LatencyTuner(*stream);
+@@ -274,6 +282,9 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 	AndroidMixerManagerImpl *this_ = (AndroidMixerManagerImpl *)arg;
+ 	Audio::MixerImpl *mixer = this_->_mixer;
+ 
++	// Ask for audio thread priority (THREAD_PRIORITY_AUDIO); harmless if refused
++	setpriority(PRIO_PROCESS, (id_t)syscall(__NR_gettid), -16);
++
+ 	std::shared_ptr<oboe::AudioStream> stream = this_->_stream_ptr;
+ 	this_->_stream.store(stream.get());
+ 
+@@ -284,8 +295,10 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 	size_t silence_count = 0;
+ 
+ 	struct timespec tv_chunk, tv_silence;
+-	// We try to fill half by half
++	// Produce in chunks of at least 20ms so the thread wakes up less often
++	const size_t minChunk = sampleRate / 50;
+ 	size_t chunkSize = this_->_chunkSize / 2;
++	if (chunkSize < minChunk) chunkSize = minChunk;
+ 	samples_to_ts(&tv_chunk, chunkSize, sampleRate);
+ 
+ 	// Variables of Android P/Q worakaround for AAudio
+@@ -301,6 +314,7 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 		stream = this_->_stream_ptr;                                   \
+ 		this_->_stream.store(stream.get());                            \
+ 		chunkSize = this_->_chunkSize / 2;                             \
++		if (chunkSize < minChunk) chunkSize = minChunk;                \
+ 		samples_to_ts(&tv_chunk, chunkSize, stream->getSampleRate());  \
+ 		clock_gettime(CLOCK_MONOTONIC, &tv_recreated);                 \
+ 	} while (false)
