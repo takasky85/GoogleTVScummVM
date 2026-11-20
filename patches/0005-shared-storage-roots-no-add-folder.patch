@@ -57,7 +57,7 @@ index 4393209f..aeff4879 100644
  		if (_scummvm != null)
  			_scummvm.setPause(false);
 diff --git a/gui/browser.cpp b/gui/browser.cpp
-index 73bac349..4cd5fd77 100644
+index 73bac349..b3bc1869 100644
 --- a/gui/browser.cpp
 +++ b/gui/browser.cpp
 @@ -112,11 +112,20 @@ void BrowserDialog::open() {
@@ -73,7 +73,7 @@ index 73bac349..4cd5fd77 100644
 +	// unless the last used folder is already somewhere inside it.
 +	{
 +		Common::String last;
-+		if (_node.isValid())
++		if (_node.exists())
 +			last = _node.getPath().toString('/');
 +		bool inSharedStorage = last.hasPrefix("/storage/emulated/") || last.hasPrefix("/sdcard");
 +		if (!inSharedStorage) {

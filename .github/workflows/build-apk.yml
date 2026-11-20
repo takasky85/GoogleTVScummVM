@@ -132,6 +132,11 @@ jobs:
           ok=0
           for attempt in 1 2 3 4; do
             if make -j"$(nproc)" androidrelease 2>&1 | tee -a ../build.log; then ok=1; break; fi
+            # Only retry download problems. A compile error will fail the same way again.
+            if ! tail -n 300 ../build.log | grep -q -E "Could not (resolve|GET)|status code 429|Read timed out|Connection reset"; then
+              echo "make failed with a non-download error, not retrying" | tee -a ../build.log
+              break
+            fi
             echo "make failed (attempt $attempt), retrying in 90 seconds" | tee -a ../build.log
             sleep 90
           done
