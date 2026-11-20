@@ -1,0 +1,135 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      scummvm_ref:
+        description: ScummVM tag or branch to build
+        default: v2026.4.0
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/build-apk.yml"
+      - "build/**"
+      - "patches/**"
+      - "signing/**"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      SCUMMVM_REF: ${{ inputs.scummvm_ref || 'v2026.4.0' }}
+      NDK_VERSION: 23.2.8568313
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v4
+
+      - name: Check out ScummVM
+        uses: actions/checkout@v4
+        with:
+          repository: scummvm/scummvm
+          ref: ${{ env.SCUMMVM_REF }}
+          path: scummvm
+          fetch-depth: 1
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install Android SDK pieces
+        run: |
+          SDK="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$SDK/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+          SDKM="$SDK/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          # ScummVM's configure insists on exactly this NDK version.
+          "$SDKM" "ndk;${NDK_VERSION}"
+          # Gradle can fetch the platform and build tools itself if this one is missing.
+          "$SDKM" "platforms;android-37" || true
+
+      - name: Apply patches
+        run: |
+          shopt -s nullglob
+          for p in patches/*.patch; do
+            echo "Applying $p"
+            git -C scummvm apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p"
+          done
+
+      - name: Configure and build (armeabi-v7a)
+        run: |
+          set -o pipefail
+          mkdir build-android
+          cd build-android
+          FLAGS=$(grep -v '^#' ../build/configure-flags.txt | tr '\n' ' ')
+          echo "configure flags: $FLAGS" | tee ../build.log
+          ../scummvm/configure --host=android-arm-v7a --disable-debug --enable-release $FLAGS 2>&1 | tee -a ../build.log
+          make -j"$(nproc)" androidrelease 2>&1 | tee -a ../build.log
+
+      - name: Sign APK
+        run: |
+          STAMP=$(TZ=America/Los_Angeles date +%y%m%d%H%M)
+          BT=$(ls -d "$ANDROID_SDK_ROOT"/build-tools/* | sort -V | tail -1)
+          OUT="gtvscumm-${STAMP}.apk"
+          "$BT/apksigner" sign \
+            --ks signing/sideload.keystore \
+            --ks-pass pass:gtvscumm-sideload \
+            --key-pass pass:gtvscumm-sideload \
+            --out "$OUT" \
+            build-android/ScummVM-release-unsigned.apk
+          "$BT/apksigner" verify --print-certs "$OUT"
+          ls -l "$OUT"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          echo "APK_NAME=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gtvscumm-${{ env.STAMP }}
+          path: ${{ env.APK_NAME }}
+          retention-days: 30
+
+      - name: Publish APK as a release (easy to download on the TV)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "build-${STAMP}" "$APK_NAME" \
+            --prerelease \
+            --title "Build ${STAMP}" \
+            --notes "ScummVM ${SCUMMVM_REF}, armeabi-v7a, SCUMM engine only. Sideload this APK."
+
+      - name: Publish log summary to the build-logs branch
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set +e
+          rm -rf /tmp/logrepo
+          mkdir -p /tmp/logrepo
+          {
+            echo "status: $JOB_STATUS"
+            echo "scummvm_ref: $SCUMMVM_REF"
+            echo "run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "commit: $GITHUB_SHA"
+          } > /tmp/logrepo/status.txt
+          if [ -f build.log ]; then
+            head -n 150 build.log > /tmp/logrepo/head.txt
+            tail -n 400 build.log > /tmp/logrepo/tail.txt
+            grep -n -i -E "error|fatal|FAILED|what went wrong|exit code" build.log | head -n 150 > /tmp/logrepo/errors.txt
+          fi
+          cd /tmp/logrepo
+          git init -q -b build-logs
+          git add -A
+          git -c user.name="github-actions" -c user.email="actions@users.noreply.github.com" commit -q -m "Build log for run ${GITHUB_RUN_ID}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" build-logs

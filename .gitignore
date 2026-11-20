@@ -1,0 +1,5 @@
+scummvm/
+build-android/
+build.log
+*.apk
+*.aab
