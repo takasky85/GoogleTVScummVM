@@ -1,0 +1,35 @@
+diff --git a/gui/browser.cpp b/gui/browser.cpp
+index 7d2612c9..eab0c38f 100644
+--- a/gui/browser.cpp
++++ b/gui/browser.cpp
+@@ -109,6 +109,15 @@ void BrowserDialog::open() {
+ 	if (ConfMan.hasKey("browser_lastpath"))
+ 		_node = Common::FSNode(ConfMan.getPath("browser_lastpath"));
+ 
++#ifdef ANDROID_BACKEND
++	// TV build: start in the Downloads folder, where game files usually are.
++	if (!_node.isDirectory()) {
++		Common::FSNode downloads("/sdcard/Download");
++		if (downloads.exists() && downloads.isDirectory())
++			_node = downloads;
++	}
++#endif
++
+ 	if (!_node.isDirectory())
+ 		_node = Common::FSNode(".");
+ 
+diff --git a/gui/gui-manager.cpp b/gui/gui-manager.cpp
+index bc85ba39..0714f2ac 100644
+--- a/gui/gui-manager.cpp
++++ b/gui/gui-manager.cpp
+@@ -127,6 +127,10 @@ void GuiManager::computeScaleFactor() {
+ 	_scaleFactor = g_system->getHiDPIScreenFactor();
+ 	if (ConfMan.hasKey("gui_scale"))
+ 		_scaleFactor *= ConfMan.getInt("gui_scale") / 100.f;
++#ifdef ANDROID_BACKEND
++	else
++		_scaleFactor *= 1.5f; // TV build: bigger text and buttons by default for large screens
++#endif
+ 
+ 	_baseHeight = (int16)((float)h / _scaleFactor);
+ 	_baseWidth = (int16)((float)w / _scaleFactor);

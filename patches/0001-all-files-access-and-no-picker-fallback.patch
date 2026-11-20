@@ -1,0 +1,100 @@
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+index 9ba50042..e4d6785c 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+@@ -24,6 +24,7 @@ package org.scummvm.scummvm;
+ import android.Manifest;
+ import android.app.Activity;
+ import android.app.AlertDialog;
++import android.content.ActivityNotFoundException;
+ import android.content.BroadcastReceiver;
+ import android.content.ClipboardManager;
+ import android.content.ComponentName;
+@@ -1344,6 +1345,44 @@ public class ScummVMActivity extends Activity {
+ 		_scummvm_thread.start();
+ 	}
+ 
++	// TV build: Android TV has no system folder picker ("you don't have an app that can do this"),
++	// so ask for "All files access" once per launch. That lets ScummVM browse /sdcard/Download directly.
++	private boolean _askedAllFilesAccess = false;
++
++	private void ensureAllFilesAccess() {
++		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || _askedAllFilesAccess) {
++			return;
++		}
++		if (Environment.isExternalStorageManager()) {
++			return;
++		}
++		_askedAllFilesAccess = true;
++
++		try {
++			startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
++				Uri.parse("package:" + getPackageName())));
++			return;
++		} catch (Exception e) {
++			Log.d(ScummVM.LOG_TAG, "No per-app all-files-access screen: " + e);
++		}
++		try {
++			startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
++			return;
++		} catch (Exception e) {
++			Log.d(ScummVM.LOG_TAG, "No all-files-access screen: " + e);
++		}
++
++		// This TV has no settings screen for it. Show the one-line fix instead.
++		new AlertDialog.Builder(this)
++			.setTitle("Allow access to your games folder")
++			.setMessage("This TV has no settings screen for file access.\n\n"
++				+ "On a computer with adb, run:\n\n"
++				+ "adb shell appops set " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow\n\n"
++				+ "Then restart this app.")
++			.setPositiveButton(android.R.string.ok, null)
++			.show();
++	}
++
+ 	@Override
+ 	public void onResume() {
+ //		Log.d(ScummVM.LOG_TAG, "onResume");
+@@ -1354,6 +1393,8 @@ public class ScummVMActivity extends Activity {
+ 
+ 		CompatHelpers.HideSystemStatusBar.hide(getWindow());
+ 
++		ensureAllFilesAccess();
++
+ 		if (_scummvm != null)
+ 			_scummvm.setPause(false);
+ 		//_main_surface.showSystemMouseCursor(false);
+@@ -2651,7 +2692,16 @@ public class ScummVMActivity extends Activity {
+ 		//noinspection SynchronizeOnNonFinalField
+ 		synchronized(safSyncObject) {
+ 			safRequestCode = 0;
+-			startActivityForResult(intent, REQUEST_SAF);
++			try {
++				startActivityForResult(intent, REQUEST_SAF);
++			} catch (ActivityNotFoundException e) {
++				// Android TV usually has no system folder picker.
++				Log.d(ScummVM.LOG_TAG, "No system folder picker on this device: " + e);
++				runOnUiThread(() -> Toast.makeText(ScummVMActivity.this,
++					"This TV has no folder picker. Choose Internal storage > Download instead.",
++					Toast.LENGTH_LONG).show());
++				return null;
++			}
+ 			while(safRequestCode != REQUEST_SAF) {
+ 				try {
+ 					safSyncObject.wait();
+diff --git a/dists/android/AndroidManifest.xml b/dists/android/AndroidManifest.xml
+index 8344aff4..43bcce91 100644
+--- a/dists/android/AndroidManifest.xml
++++ b/dists/android/AndroidManifest.xml
+@@ -17,6 +17,11 @@
+ 	<uses-permission
+ 		android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+ 		tools:ignore="ScopedStorage" />
++	<!-- TV build: lets the app read game folders (such as Downloads) directly, because
++	     Android TV has no system folder picker. -->
++	<uses-permission
++		android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
++		tools:ignore="ScopedStorage" />
+ 
+ 	<uses-feature
+ 		android:name="android.hardware.audio.low_latency"
