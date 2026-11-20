@@ -25,10 +25,10 @@ index 61a57afe..d69a825e 100644
 -			bufferCapacity = minCapacity;
 -		}
 +	{
-+		// Keep ~100ms of mixed audio buffered ahead: enough that Ogg Vorbis decoding or a busy CPU
++		// Keep ~140ms of mixed audio buffered ahead: enough that Ogg Vorbis decoding or a busy CPU
 +		// can't starve the output (static), small enough that speech still starts promptly.
 +		// A bigger buffer than this adds a noticeable delay before characters talk.
-+		bufferCapacity = sampleRate / 10;
++		bufferCapacity = sampleRate / 7;
  	}
  
  	if (!_buffer) {

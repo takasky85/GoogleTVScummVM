@@ -30,3 +30,8 @@ noticeable in these games).
 
 Update to 0006: the first version buffered ~250 ms and caused a noticeable delay before speech. It now
 uses a ~100 ms buffer with the stock low-latency stream.
+
+## 0007-preload-vorbis-clips.patch
+Ogg Vorbis clips up to 8 MB (Sam & Max speech lines, effects) are read fully into memory before decoding,
+and bigger streams (music) get a 256 KB read buffer, so slow Android shared-storage reads can't stall the
+audio thread. Patch 6's buffer was raised to ~140 ms.

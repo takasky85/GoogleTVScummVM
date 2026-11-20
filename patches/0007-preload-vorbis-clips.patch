@@ -1,0 +1,44 @@
+diff --git a/audio/decoders/vorbis.cpp b/audio/decoders/vorbis.cpp
+index 3edcf90d..e0aedefc 100644
+--- a/audio/decoders/vorbis.cpp
++++ b/audio/decoders/vorbis.cpp
+@@ -30,6 +30,8 @@
+ #ifdef USE_VORBIS
+ 
+ #include "common/textconsole.h"
++#include "common/memstream.h"
++#include "common/bufferedstream.h"
+ #include "common/util.h"
+ 
+ namespace Audio {
+@@ -194,6 +196,30 @@ bool VorbisStream::refill() {
+ SeekableAudioStream *makeVorbisStream(
+ 	Common::SeekableReadStream *stream,
+ 	DisposeAfterUse::Flag disposeAfterUse) {
++	// Android/TV storage (FUSE) can stall on small reads, and decoding happens on the audio
++	// thread: a stall there is heard as static. Load short clips (speech, effects) fully into
++	// memory and buffer long ones (music) with big reads.
++	if (stream->pos() == 0) {
++		int64 size = stream->size();
++		if (size > 0 && size <= 8 * 1024 * 1024) {
++			byte *data = (byte *)malloc((size_t)size);
++			if (data) {
++				if (stream->read(data, (uint32)size) == (uint32)size) {
++					if (disposeAfterUse == DisposeAfterUse::YES)
++						delete stream;
++					stream = new Common::MemoryReadStream(data, (uint32)size, DisposeAfterUse::YES);
++					disposeAfterUse = DisposeAfterUse::YES;
++				} else {
++					free(data);
++					stream->seek(0);
++				}
++			}
++		}
++		if (size > 8 * 1024 * 1024) {
++			stream = Common::wrapBufferedSeekableReadStream(stream, 256 * 1024, disposeAfterUse);
++			disposeAfterUse = DisposeAfterUse::YES;
++		}
++	}
+ 	SeekableAudioStream *s = new VorbisStream(stream, disposeAfterUse);
+ 	if (s && s->endOfData()) {
+ 		delete s;
