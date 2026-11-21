@@ -1,14 +1,14 @@
 # One ScummVM ./configure flag per line. Lines starting with # are ignored.
 # The workflow adds --host=android-arm-v7a --disable-debug --enable-release itself.
 
-# Only the SCUMM engine (v0-v6 games: Monkey Island 1-2, Indy 3-4, Loom,
-# Day of the Tentacle, Sam & Max, and the other classic 320x200 titles).
+# Only the SCUMM engine: v0-v6 games (Monkey Island 1-2, Indy 3-4, Loom,
+# Day of the Tentacle, Sam & Max, ...) plus v7/v8 (Full Throttle, The Dig,
+# Curse of Monkey Island). Sub-engines are NOT enabled by --enable-engine=scumm
+# when --disable-all-engines is used, so v7/v8 needs its own flag (hyphens).
 --disable-all-engines
 --enable-engine=scumm
-# Leave out the v7/v8 games (Full Throttle, The Dig, Curse of Monkey Island),
-# Humongous Entertainment games, and Rebel Assault 2 PSX.
-# Remove the next line if you want Full Throttle and The Dig.
---disable-engine=scumm_7_8
+--enable-engine=scumm-7-8
+# Leave out Humongous Entertainment games and Rebel Assault 2 PSX.
 --disable-engine=he
 --disable-engine=rebel2_psx
 
