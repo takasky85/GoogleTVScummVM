@@ -154,6 +154,26 @@ jobs:
           make install 2>&1 | tee -a ../mad.log
           ls -l "$P/lib" "$P/include"
 
+      # PNG support: the launcher's grid view draws its game tiles from PNG images. Without it
+      # ScummVM aborts with "No PNG support compiled!" when grid view is selected.
+      - name: Build libpng (armeabi-v7a)
+        run: |
+          set -o pipefail
+          P="$GITHUB_WORKSPACE/deps-prefix"
+          git clone --depth 1 --branch v1.6.47 https://github.com/pnggroup/libpng png-src
+          cmake -S png-src -B png-build \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-16 \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX="$P" \
+            -DPNG_SHARED=OFF -DPNG_STATIC=ON -DPNG_TESTS=OFF -DPNG_TOOLS=OFF \
+            -DPNG_FRAMEWORK=OFF -DPNG_ARM_NEON=off 2>&1 | tee png.log
+          cmake --build png-build -j"$(nproc)" 2>&1 | tee -a png.log
+          cmake --install png-build 2>&1 | tee -a png.log
+          # ScummVM's configure links with -lpng
+          if [ ! -f "$P/lib/libpng.a" ]; then cp "$P/lib/libpng16.a" "$P/lib/libpng.a"; fi
+          ls -l "$P/lib" "$P/include"
+
       - name: Configure and build (armeabi-v7a)
         run: |
           set -o pipefail
@@ -239,9 +259,9 @@ jobs:
             echo "commit: $GITHUB_SHA"
           } > /tmp/logrepo/status.txt
           if [ -f build.log ]; then
-            grep -i -E "checking for (ogg|vorbis|tremor|mad|flac)|Vorbis file support|MP3|FLAC|oboe" build.log | head -n 16 >> /tmp/logrepo/status.txt
+            grep -i -E "checking for (ogg|vorbis|tremor|mad|flac)|Checking for PNG|PNG >= |Vorbis file support|MP3|FLAC|oboe" build.log | head -n 16 >> /tmp/logrepo/status.txt
           fi
-          for f in oboe ogg vorbis flac mad; do
+          for f in oboe ogg vorbis flac mad png; do
             if [ -f "$f.log" ]; then tail -n 80 "$f.log" > "/tmp/logrepo/$f-tail.txt"; fi
           done
           if [ -f build.log ]; then
