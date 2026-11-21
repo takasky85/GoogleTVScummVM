@@ -157,7 +157,7 @@ jobs:
         run: |
           set -o pipefail
           P="$GITHUB_WORKSPACE/deps-prefix"
-          sudo apt-get install -y autoconf automake libtool 2>&1 | tail -n 2
+          sudo apt-get install -y autoconf automake libtool libogg-dev pkg-config 2>&1 | tail -n 2
           git clone --depth 1 https://gitlab.xiph.org/xiph/tremor.git tremor-src 2>&1 | tee tremor.log
           cd tremor-src
           TC="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
