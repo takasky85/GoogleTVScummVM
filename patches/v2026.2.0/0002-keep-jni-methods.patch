@@ -1,0 +1,10 @@
+diff --git a/dists/android/proguard-rules.pro b/dists/android/proguard-rules.pro
+index e9caf635..f086c078 100644
+--- a/dists/android/proguard-rules.pro
++++ b/dists/android/proguard-rules.pro
+@@ -1 +1,5 @@
+ -dontobfuscate
++
++# The native code calls into these Java classes through JNI; nothing in Java references those
++# methods, so without this R8 strips them and the app aborts at startup ("Can't find function ...").
++-keep class org.scummvm.scummvm.** { *; }
