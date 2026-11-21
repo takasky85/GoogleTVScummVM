@@ -23,10 +23,10 @@ Planned next:
 5. Auto-scan Downloads for supported games and show a simple grid.
 
 ## 0006-steadier-audio-buffering.patch
-Targets static in the sound. Uses a shared, non-low-latency Oboe stream (the exclusive low-latency
-MMAP path was glitchy on the TV box), an ~80 ms ring buffer, a producer thread that wakes every >=10 ms,
-and asks for audio thread priority. (An earlier version used a 250 ms buffer: less static but a clear
-delay before speech.)
+Targets static in the sound. Keeps the stock low-latency Oboe stream, uses an ~80 ms ring buffer, a
+producer thread that wakes every >=10 ms, and asks for audio thread priority. (An earlier version used a
+250 ms buffer: less static but a clear delay before speech.) The workflow also builds Tremor (integer Ogg
+Vorbis decoder) and uses it instead of libvorbis when it builds.
 
 ## 0007-preload-vorbis-clips.patch
 Ogg Vorbis clips up to 8 MB (Sam & Max speech lines, effects) are read fully into memory before decoding,

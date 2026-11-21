@@ -150,6 +150,27 @@ jobs:
           make install 2>&1 | tee -a ../mad.log
           ls -l "$P/lib" "$P/include"
 
+      # Tremor: integer-only Ogg Vorbis decoder, what ScummVM recommends on ARM. If this
+      # step fails, the build simply keeps using libvorbis (see the configure step).
+      - name: Build Tremor (armeabi-v7a)
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          P="$GITHUB_WORKSPACE/deps-prefix"
+          sudo apt-get install -y autoconf automake libtool 2>&1 | tail -n 2
+          git clone --depth 1 https://gitlab.xiph.org/xiph/tremor.git tremor-src 2>&1 | tee tremor.log
+          cd tremor-src
+          TC="$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          ./autogen.sh --build=x86_64-linux-gnu --host=arm-linux-gnueabi --prefix="$P" \
+            --enable-static --disable-shared --with-ogg="$P" \
+            CC="$TC/armv7a-linux-androideabi16-clang" AR="$TC/llvm-ar" RANLIB="$TC/llvm-ranlib" \
+            CFLAGS="-O3 -fPIC" CPPFLAGS="-I$P/include" LDFLAGS="-L$P/lib" 2>&1 | tee -a ../tremor.log
+          # use the portable C code, not the gcc-only ARM inline assembly
+          grep -rl "_ARM_ASSEM_" --include=Makefile . | xargs -r sed -i 's/-D_ARM_ASSEM_//g'
+          make -j"$(nproc)" 2>&1 | tee -a ../tremor.log
+          make install 2>&1 | tee -a ../tremor.log
+          ls -l "$P/lib"; ls -R "$P/include" | head -n 40
+
       - name: Configure and build (armeabi-v7a)
         run: |
           set -o pipefail
@@ -158,6 +179,13 @@ jobs:
           mkdir build-android
           cd build-android
           FLAGS=$(grep -v '^#' ../build/configure-flags.txt | tr '\n' ' ')
+          # Prefer Tremor for Ogg Vorbis when it built (libvorbis stays as the fallback)
+          if [ -f "$GITHUB_WORKSPACE/deps-prefix/lib/libvorbisidec.a" ] && [ -f "$GITHUB_WORKSPACE/deps-prefix/include/tremor/ivorbisfile.h" ]; then
+            FLAGS="$FLAGS --disable-vorbis --enable-tremor"
+            echo "Using Tremor for Ogg Vorbis"
+          else
+            echo "Tremor not available, using libvorbis"
+          fi
           echo "configure flags: $FLAGS" | tee ../build.log
           ../scummvm/configure --host=android-arm-v7a --disable-debug --enable-release $FLAGS 2>&1 | tee -a ../build.log
           # Gradle downloads its tools from Maven Central, which sometimes answers 429 (too many requests).
@@ -223,9 +251,9 @@ jobs:
             echo "commit: $GITHUB_SHA"
           } > /tmp/logrepo/status.txt
           if [ -f build.log ]; then
-            grep -i -E "checking for (ogg|vorbis|tremor|mad|flac)|Vorbis file support|MP3|FLAC|oboe" build.log | head -n 16 >> /tmp/logrepo/status.txt
+            grep -i -E "checking for (ogg|vorbis|tremor|mad|flac)|Using Tremor|Tremor not available|Vorbis file support|MP3|FLAC|oboe" build.log | head -n 16 >> /tmp/logrepo/status.txt
           fi
-          for f in oboe ogg vorbis flac mad; do
+          for f in oboe ogg vorbis flac mad tremor; do
             if [ -f "$f.log" ]; then tail -n 80 "$f.log" > "/tmp/logrepo/$f-tail.txt"; fi
           done
           if [ -f build.log ]; then
