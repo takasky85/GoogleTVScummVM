@@ -166,7 +166,7 @@ jobs:
           ./configure --build=x86_64-linux-gnu --host=arm-linux-gnueabi --prefix="$P" \
             --enable-static --disable-shared --with-ogg="$P" \
             CC="$TC/armv7a-linux-androideabi16-clang" AR="$TC/llvm-ar" RANLIB="$TC/llvm-ranlib" \
-            CFLAGS="-O3 -fPIC" CPPFLAGS="-I$P/include" LDFLAGS="-L$P/lib" 2>&1 | tee -a ../tremor.log
+            CFLAGS="-O3 -fPIC -Wno-macro-redefined -DLITTLE_ENDIAN=1234 -DBIG_ENDIAN=4321 -DBYTE_ORDER=1234" CPPFLAGS="-I$P/include" LDFLAGS="-L$P/lib" 2>&1 | tee -a ../tremor.log
           # use the portable C code, not the gcc-only ARM inline assembly
           grep -rl "_ARM_ASSEM_" --include=Makefile . | xargs -r sed -i 's/-D_ARM_ASSEM_//g'
           make -j"$(nproc)" 2>&1 | tee -a ../tremor.log
