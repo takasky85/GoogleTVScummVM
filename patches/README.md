@@ -45,3 +45,7 @@ browser, bigger GUI, Vorbis clip preloading). The numbered patches 0001-0007 her
 The v2026.2.0 patch also adds a crash reporter: if the previous run crashed, the app reads its own system
 log at startup and shows the crash lines in a dialog (and saves them to Download/gtvscumm-crash.txt),
 holding the native start until the dialog is dismissed. For devices without adb.
+
+v2026.2.0 patch 0003: when the activity finishes (Quit), the process is ended after the native thread has
+finished, so re-opening the app starts from a clean process (re-opening in the same process left a black
+screen on the TV).

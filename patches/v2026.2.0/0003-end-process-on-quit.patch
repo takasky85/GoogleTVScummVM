@@ -1,0 +1,18 @@
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+index a02c6522..b7ebaf49 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+@@ -1403,6 +1403,13 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 		}
+ 
+ 		showToggleOnScreenBtnIcons(0);
++
++		// ScummVM's native code keeps global state. Re-opening the app in the same process after
++		// quitting left a black screen on the TV, so end the process: the next start is always clean.
++		// (The native thread has finished and written its config by now.)
++		if (isFinishing()) {
++			Process.killProcess(Process.myPid());
++		}
+ 	}
+ 
+ 
