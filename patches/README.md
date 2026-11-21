@@ -41,3 +41,7 @@ audio thread.
 `v2026.2.0` is the last release with the older audio thread (JNI AudioTrack), so the workflow now builds
 that by default, with the patches in `patches/v2026.2.0/` (one combined patch: all-files access, Downloads
 browser, bigger GUI, Vorbis clip preloading). The numbered patches 0001-0007 here are for v2026.4.0.
+
+The v2026.2.0 patch also adds a crash reporter: if the previous run crashed, the app reads its own system
+log at startup and shows the crash lines in a dialog (and saves them to Download/gtvscumm-crash.txt),
+holding the native start until the dialog is dismissed. For devices without adb.

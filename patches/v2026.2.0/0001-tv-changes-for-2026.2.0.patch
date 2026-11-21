@@ -86,7 +86,7 @@ index e16b6e13..17b827b4 100644
  	}
  }
 diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
-index 41725a0a..89a5cb94 100644
+index 41725a0a..63cee357 100644
 --- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
 +++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
 @@ -24,6 +24,7 @@ import android.os.Handler;
@@ -97,7 +97,122 @@ index 41725a0a..89a5cb94 100644
  import android.provider.DocumentsContract;
  import android.provider.Settings;
  import android.text.TextUtils;
-@@ -1191,6 +1192,44 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+@@ -980,12 +981,94 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 	private MouseHelper _mouseHelper;
+ 	private Thread _scummvm_thread;
+ 
++	// Diagnostic: if the previous run of this app crashed, show the crash lines from the system log
++	// (an app can read its own log), so a crash on a TV without adb can still be reported.
++	private final java.util.concurrent.CountDownLatch _crashDialogDone = new java.util.concurrent.CountDownLatch(1);
++
++	private void showPreviousCrashLog() {
++		boolean showing = false;
++		try {
++			Process proc = Runtime.getRuntime().exec(new String[] { "logcat", "-d", "-t", "3000" });
++			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(proc.getInputStream()));
++			java.util.ArrayList<String> keep = new java.util.ArrayList<String>();
++			boolean crashed = false;
++			String lastFatalStamp = "";
++			String line;
++			while ((line = reader.readLine()) != null) {
++				boolean fatal = line.contains("FATAL EXCEPTION") || line.contains("Fatal signal") || line.contains("Abort message");
++				if (fatal) {
++					crashed = true;
++					lastFatalStamp = line.length() > 18 ? line.substring(0, 18) : line;
++				}
++				if (fatal || line.contains("AndroidRuntime") || line.contains("backtrace:") || line.contains("UnsatisfiedLinkError")
++					|| line.matches(".*#[0-9][0-9] pc .*") || (line.contains("ScummVM") && (line.contains(" E ") || line.contains(" F ")))) {
++					String shortLine = line.length() > 150 ? line.substring(0, 150) : line;
++					keep.add(shortLine);
++					if (keep.size() > 60) {
++						keep.remove(0);
++					}
++				}
++			}
++			reader.close();
++			final android.content.SharedPreferences prefs = getSharedPreferences("gtvscumm", MODE_PRIVATE);
++			final String stamp = lastFatalStamp;
++			if (!crashed || keep.isEmpty() || stamp.equals(prefs.getString("crash_shown", ""))) {
++				return;
++			}
++			showing = true;
++			final StringBuilder sb = new StringBuilder();
++			for (String l : keep) {
++				sb.append(l).append('\n');
++			}
++			try {
++				File out = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "gtvscumm-crash.txt");
++				FileOutputStream fos = new FileOutputStream(out);
++				fos.write(sb.toString().getBytes("UTF-8"));
++				fos.close();
++			} catch (Exception e) {
++				// ignore: showing the dialog is enough
++			}
++			new Handler(Looper.getMainLooper()).post(new Runnable() {
++				@Override
++				public void run() {
++					android.widget.TextView tv = new android.widget.TextView(ScummVMActivity.this);
++					tv.setText(sb.toString());
++					tv.setTextSize(10);
++					tv.setTypeface(android.graphics.Typeface.MONOSPACE);
++					tv.setPadding(24, 16, 24, 16);
++					android.widget.ScrollView sv = new android.widget.ScrollView(ScummVMActivity.this);
++					sv.addView(tv);
++					new AlertDialog.Builder(ScummVMActivity.this)
++						.setTitle("Last run crashed - please photograph this")
++						.setView(sv)
++						.setPositiveButton(android.R.string.ok, null)
++						.setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
++							@Override
++							public void onDismiss(android.content.DialogInterface d) {
++								prefs.edit().putString("crash_shown", stamp).apply();
++								_crashDialogDone.countDown();
++							}
++						})
++						.show();
++				}
++			});
++		} catch (Exception e) {
++			// never let the diagnostic itself break startup
++			showing = false;
++		}
++		if (!showing) {
++			_crashDialogDone.countDown();
++		}
++	}
++
+ 	@Override
+ 	public void onCreate(Bundle savedInstanceState) {
+ //		Log.d(ScummVM.LOG_TAG, "onCreate: " + getIntent().getData());
+ 
+ 		super.onCreate(savedInstanceState);
+ 
++		showPreviousCrashLog();
++
+ 		setLogFile();
+ 
+ 		safSyncObject = new Object();
+@@ -1122,7 +1205,18 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 			}
+ 		});
+ 
+-		_scummvm_thread = new Thread(null, _scummvm, "ScummVM", 8388608); // 8MB
++		// Wait for the crash-report dialog (if any) before starting the native code
++		_scummvm_thread = new Thread(null, new Runnable() {
++			@Override
++			public void run() {
++				try {
++					_crashDialogDone.await();
++				} catch (InterruptedException e) {
++					// go on
++				}
++				_scummvm.run();
++			}
++		}, "ScummVM", 8388608); // 8MB
+ 		_scummvm_thread.start();
+ 	}
+ 
+@@ -1191,6 +1285,44 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
  		_scummvm_thread.start();
  	}
  
@@ -142,7 +257,7 @@ index 41725a0a..89a5cb94 100644
  	@Override
  	public void onResume() {
  //		Log.d(ScummVM.LOG_TAG, "onResume");
-@@ -1201,6 +1240,8 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+@@ -1201,6 +1333,8 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
  
  		CompatHelpers.HideSystemStatusBar.hide(getWindow());
  
@@ -151,7 +266,7 @@ index 41725a0a..89a5cb94 100644
  		if (_scummvm != null)
  			_scummvm.setPause(false);
  		//_main_surface.showSystemMouseCursor(false);
-@@ -2357,7 +2398,16 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+@@ -2357,7 +2491,16 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
  		Uri resultURI;
  		synchronized(safSyncObject) {
  			safRequestCode = 0;
