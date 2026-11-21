@@ -1,0 +1,80 @@
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+index b7ebaf49..3d8bead5 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+@@ -981,6 +981,75 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 	private MouseHelper _mouseHelper;
+ 	private Thread _scummvm_thread;
+ 
++	// Diagnostic: press F12 to see ScummVM's own log, its config file and recent system log lines.
++	private static void addTail(StringBuilder sb, java.io.File f, int maxLines, boolean fromStart) {
++		try {
++			java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f));
++			java.util.ArrayList<String> lines = new java.util.ArrayList<String>();
++			String l;
++			while ((l = r.readLine()) != null) {
++				lines.add(l.length() > 110 ? l.substring(0, 110) : l);
++				if (fromStart) {
++					if (lines.size() >= maxLines) break;
++				} else if (lines.size() > maxLines) {
++					lines.remove(0);
++				}
++			}
++			r.close();
++			for (String x : lines) {
++				sb.append(x).append('\n');
++			}
++		} catch (Exception e) {
++			sb.append("(cannot read: ").append(e.getMessage()).append(")\n");
++		}
++	}
++
++	private void showDebugInfo() {
++		final StringBuilder sb = new StringBuilder();
++		sb.append("== scummvm.log (last 45 lines) ==\n");
++		addTail(sb, new File(getFilesDir(), "scummvm.log"), 45, false);
++		try {
++			sb.append("\n== config: ").append(_configScummvmFile.getPath()).append(" (")
++				.append(_configScummvmFile.length()).append(" bytes) ==\n");
++			addTail(sb, _configScummvmFile, 30, true);
++		} catch (Exception e) {
++			sb.append("(no config info)\n");
++		}
++		try {
++			java.lang.Process proc = Runtime.getRuntime().exec(new String[] { "logcat", "-d", "--pid=" + android.os.Process.myPid(), "-t", "60", "*:W" });
++			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(proc.getInputStream()));
++			sb.append("\n== system log (warnings/errors, this run) ==\n");
++			String line;
++			while ((line = reader.readLine()) != null) {
++				sb.append(line.length() > 110 ? line.substring(0, 110) : line).append('\n');
++			}
++			reader.close();
++		} catch (Exception e) {
++			sb.append("(no system log)\n");
++		}
++		android.widget.TextView tv = new android.widget.TextView(this);
++		tv.setText(sb.toString());
++		tv.setTextSize(10);
++		tv.setTypeface(android.graphics.Typeface.MONOSPACE);
++		tv.setPadding(24, 16, 24, 16);
++		android.widget.ScrollView sv = new android.widget.ScrollView(this);
++		sv.addView(tv);
++		new AlertDialog.Builder(this)
++			.setTitle("ScummVM debug info (F12)")
++			.setView(sv)
++			.setPositiveButton(android.R.string.ok, null)
++			.show();
++	}
++
++	@Override
++	public boolean dispatchKeyEvent(KeyEvent event) {
++		if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 && event.getKeyCode() == KeyEvent.KEYCODE_F12) {
++			showDebugInfo();
++			return true;
++		}
++		return super.dispatchKeyEvent(event);
++	}
++
+ 	// Diagnostic: if the previous run of this app crashed, show the crash lines from the system log
+ 	// (an app can read its own log), so a crash on a TV without adb can still be reported.
+ 	private final java.util.concurrent.CountDownLatch _crashDialogDone = new java.util.concurrent.CountDownLatch(1);
