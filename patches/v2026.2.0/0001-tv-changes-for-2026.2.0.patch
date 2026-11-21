@@ -133,7 +133,7 @@ index 41725a0a..63cee357 100644
 +			final android.content.SharedPreferences prefs = getSharedPreferences("gtvscumm", MODE_PRIVATE);
 +			final String stamp = lastFatalStamp;
 +			if (!crashed || keep.isEmpty() || stamp.equals(prefs.getString("crash_shown", ""))) {
-+				return;
++				_crashDialogDone.countDown(); return;
 +			}
 +			showing = true;
 +			final StringBuilder sb = new StringBuilder();

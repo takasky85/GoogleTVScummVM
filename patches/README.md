@@ -52,3 +52,7 @@ screen on the TV).
 
 v2026.2.0 patch 0004: press F12 (keyboard) in the app to see a debug dialog with the tail of ScummVM's own log,
 the start of its config file and recent system-log warnings (for startup problems without adb).
+
+Note: the crash reporter in 0001 used to return early when the previous run had not crashed
+without releasing the start-up latch, so the ScummVM thread never started (black screen on every
+launch with no crash in the log). It now always releases the latch.
