@@ -108,7 +108,7 @@ index 41725a0a..63cee357 100644
 +	private void showPreviousCrashLog() {
 +		boolean showing = false;
 +		try {
-+			Process proc = Runtime.getRuntime().exec(new String[] { "logcat", "-d", "-t", "3000" });
++			java.lang.Process proc = Runtime.getRuntime().exec(new String[] { "logcat", "-d", "-t", "3000" });
 +			java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(proc.getInputStream()));
 +			java.util.ArrayList<String> keep = new java.util.ArrayList<String>();
 +			boolean crashed = false;
