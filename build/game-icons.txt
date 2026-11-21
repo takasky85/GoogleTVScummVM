@@ -1,0 +1,18 @@
+# SCUMM game ids that get a launcher grid icon (one per line). Only games the compiled-in
+# engines support (no Humongous Entertainment games). Used by the "Add game icons" workflow step.
+atlantis
+comi
+dig
+ft
+indy3
+loom
+maniac
+monkey
+monkey2
+pass
+samnmax
+tentacle
+zak
+zakloom
+indyloom
+indyzak

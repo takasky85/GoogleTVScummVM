@@ -1,0 +1,193 @@
+diff --git a/backends/graphics/android/android-graphics.h b/backends/graphics/android/android-graphics.h
+index 607bdd36..1f7cb880 100644
+--- a/backends/graphics/android/android-graphics.h
++++ b/backends/graphics/android/android-graphics.h
+@@ -45,6 +45,7 @@ public:
+ 
+ 	bool notifyMousePosition(Common::Point &mouse);
+ 	Common::Point getMousePosition() { return Common::Point(_cursorX, _cursorY); }
++	Common::Rect getActiveDrawRect() const { return _activeArea.drawRect; }
+ 
+ 	float getHiDPIScreenFactor() const override;
+ 
+diff --git a/backends/platform/android/android.cpp b/backends/platform/android/android.cpp
+index a0329ade..4339d719 100644
+--- a/backends/platform/android/android.cpp
++++ b/backends/platform/android/android.cpp
+@@ -495,6 +495,8 @@ void OSystem_Android::initBackend() {
+ 	// slow down a bit virtual mouse speed (typical default seems to be "3") - eg. when controlling the virtual mouse cursor with DPAD keys
+ 	// Also see declaration of support for feature kFeatureKbdMouseSpeed bellow
+ 	ConfMan.registerDefault("kbdmouse_speed", 2);
++	// TV build: speed multiplier for a real mouse, in percent (100 = system pointer speed)
++	ConfMan.registerDefault("gtv_mouse_speed", 200);
+ 	ConfMan.registerDefault("joystick_deadzone", 3);
+ 
+ 	// explicitly set this, since fullscreen cannot be changed from GUI
+diff --git a/backends/platform/android/android.h b/backends/platform/android/android.h
+index 41bd3f07..9505ff73 100644
+--- a/backends/platform/android/android.h
++++ b/backends/platform/android/android.h
+@@ -161,6 +161,14 @@ private:
+ 	int _touch_mode;
+ 	int _touchpad_scale;  // Used in events.cpp
+ 	int _trackball_scale; // Used in events.cpp
++
++	// TV build: mouse speed multiplier (percent, 100 = system speed) for real mice
++	volatile int _mouseSpeed = 200;
++	uint32 _mouseSpeedChecked = 0;
++	bool _mouseHaveRaw = false;
++	int _mouseRawX = 0, _mouseRawY = 0;
++	int _mouseVirtX100 = 0, _mouseVirtY100 = 0;
++	void applyMouseSpeed(int &x, int &y);
+ 	int _dpad_scale;      // Used in events.cpp
+ 	int _joystick_scale;  // TODO This seems currently unused. Is it needed?
+ //	int _fingersDown;
+diff --git a/backends/platform/android/events.cpp b/backends/platform/android/events.cpp
+index 091157a1..3027ed1f 100644
+--- a/backends/platform/android/events.cpp
++++ b/backends/platform/android/events.cpp
+@@ -384,10 +384,52 @@ static const Common::KeyCode jkeymap[] = {
+ 	Common::KEYCODE_PASTE // AKEYCODE_PASTE
+ };
+ 
++// TV build: make a real mouse faster than Android's pointer speed allows. Android sends absolute
++// pointer positions, so the movement since the previous event is multiplied and added to a virtual
++// position that is kept inside the game's drawing area.
++void OSystem_Android::applyMouseSpeed(int &x, int &y) {
++	if (_mouseSpeed <= 100) {
++		_mouseHaveRaw = false;
++		return;
++	}
++
++	AndroidGraphicsManager *gm = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager);
++	if (!gm) {
++		return;
++	}
++
++	if (!_mouseHaveRaw) {
++		_mouseHaveRaw = true;
++		_mouseRawX = x;
++		_mouseRawY = y;
++		_mouseVirtX100 = x * 100;
++		_mouseVirtY100 = y * 100;
++		return;
++	}
++
++	_mouseVirtX100 += (x - _mouseRawX) * _mouseSpeed;
++	_mouseVirtY100 += (y - _mouseRawY) * _mouseSpeed;
++	_mouseRawX = x;
++	_mouseRawY = y;
++
++	Common::Rect r = gm->getActiveDrawRect();
++	if (r.width() > 0 && r.height() > 0) {
++		_mouseVirtX100 = CLIP<int>(_mouseVirtX100, r.left * 100, r.right * 100);
++		_mouseVirtY100 = CLIP<int>(_mouseVirtY100, r.top * 100, r.bottom * 100);
++	}
++
++	x = _mouseVirtX100 / 100;
++	y = _mouseVirtY100 / 100;
++}
++
+ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
+                                           int arg4, int arg5, int arg6) {
+ 	Common::Event ev0;
+ 
++	if (type == JE_MOUSE_MOVE || (type >= JE_LMB_DOWN && type <= JE_RMB_UP) || (type >= JE_MMB_DOWN && type <= JE_MOUSE_WHEEL_DOWN)) {
++		applyMouseSpeed(arg1, arg2);
++	}
++
+ 	switch (type) {
+ 	case JE_SYS_KEY:
+ 		// fall through
+@@ -1457,6 +1499,13 @@ bool OSystem_Android::pollEvent(Common::Event &event) {
+ 	//ENTER();
+ 
+ 	if (pthread_self() == _main_thread) {
++		// pick up changes of the mouse speed option (ConfMan must only be used from this thread)
++		uint32 nowMs = getMillis(true);
++		if (nowMs - _mouseSpeedChecked > 500) {
++			_mouseSpeedChecked = nowMs;
++			_mouseSpeed = ConfMan.getInt("gtv_mouse_speed", Common::ConfigManager::kApplicationDomain);
++		}
++
+ 		if (_screen_changeid != JNI::surface_changeid) {
+ 			_screen_changeid = JNI::surface_changeid;
+ 			// If we lose the surface, don't deinit as we lose the EGL context and this may lead to crashes
+diff --git a/backends/platform/android/options.cpp b/backends/platform/android/options.cpp
+index 8f77fe2a..054e83d3 100644
+--- a/backends/platform/android/options.cpp
++++ b/backends/platform/android/options.cpp
+@@ -74,6 +74,8 @@ private:
+ 	void defineLayout(GUI::ThemeEval &layouts, const Common::String &layoutName, const Common::String &overlayedLayout) const override;
+ 	void handleCommand(GUI::CommandSender *sender, uint32 cmd, uint32 data) override;
+ 
++	GUI::StaticTextWidget *_mouseSpeedDesc;
++	GUI::PopUpWidget *_mouseSpeedPopUp;
+ 	GUI::CheckboxWidget *_onscreenCheckbox;
+ 	GUI::CheckboxWidget *_ignoreGameSafeAreaCheckbox;
+ 	GUI::StaticTextWidget *_preferredTouchModeDesc;
+@@ -134,6 +136,19 @@ AndroidOptionsWidget::AndroidOptionsWidget(GuiObject *boss, const Common::String
+ 
+ 	const bool inAppDomain = domain.equalsIgnoreCase(Common::ConfigManager::kApplicationDomain);;
+ 
++	_mouseSpeedDesc = nullptr;
++	_mouseSpeedPopUp = nullptr;
++	if (inAppDomain) {
++		_mouseSpeedDesc = new GUI::StaticTextWidget(widgetsBoss(), "AndroidOptionsDialog.MouseSpeedText", _("Mouse speed:"));
++		_mouseSpeedPopUp = new GUI::PopUpWidget(widgetsBoss(), "AndroidOptionsDialog.MouseSpeed", _("How fast a USB or Bluetooth mouse moves, on top of Android's own pointer speed"));
++		_mouseSpeedPopUp->appendEntry(_("Normal (1x)"), 100);
++		_mouseSpeedPopUp->appendEntry(_("Fast (1.5x)"), 150);
++		_mouseSpeedPopUp->appendEntry(_("Faster (2x)"), 200);
++		_mouseSpeedPopUp->appendEntry(_("Very fast (3x)"), 300);
++		_mouseSpeedPopUp->appendEntry(_("Extra fast (4x)"), 400);
++		_mouseSpeedPopUp->appendEntry(_("Ultra fast (6x)"), 600);
++	}
++
+ 	_onscreenCheckbox = new GUI::CheckboxWidget(widgetsBoss(), "AndroidOptionsDialog.OnScreenControl", _("Show On-screen control"));
+ 	_ignoreGameSafeAreaCheckbox = new GUI::CheckboxWidget(widgetsBoss(), "AndroidOptionsDialog.IgnoreGameSafeArea", _("Ignore safe areas in-game"));
+ 	_preferredTouchModeDesc = new GUI::StaticTextWidget(widgetsBoss(), "AndroidOptionsDialog.PreferredTouchModeText", _("Choose the preferred touch mode:"));
+@@ -209,8 +224,17 @@ void AndroidOptionsWidget::defineLayout(GUI::ThemeEval &layouts, const Common::S
+ 
+ 	layouts.addDialog(layoutName, overlayedLayout)
+ 	        .addLayout(GUI::ThemeLayout::kLayoutVertical)
+-	            .addPadding(0, 0, 0, 0)
+-	            .addWidget("OnScreenControl", "Checkbox")
++	            .addPadding(0, 0, 0, 0);
++
++	if (inAppDomain) {
++		layouts.addLayout(GUI::ThemeLayout::kLayoutHorizontal)
++			.addPadding(0, 0, 0, 0)
++			.addWidget("MouseSpeedText", "OptionsLabel")
++			.addWidget("MouseSpeed", "PopUp")
++		.closeLayout();
++	}
++
++	layouts.addWidget("OnScreenControl", "Checkbox")
+ 	            .addWidget("IgnoreGameSafeArea", "Checkbox")
+ 	            .addWidget("PreferredTouchModeText", "", -1, layouts.getVar("Globals.Line.Height"));
+ 
+@@ -363,6 +387,14 @@ uint32 AndroidOptionsWidget::loadOrientation(const Common::String &setting, bool
+ void AndroidOptionsWidget::load() {
+ 	const bool inAppDomain = _domain.equalsIgnoreCase(Common::ConfigManager::kApplicationDomain);
+ 
++	if (inAppDomain) {
++		int speed = ConfMan.getInt("gtv_mouse_speed", _domain);
++		if (speed != 100 && speed != 150 && speed != 200 && speed != 300 && speed != 400 && speed != 600) {
++			speed = 200;
++		}
++		_mouseSpeedPopUp->setSelectedTag(speed);
++	}
++
+ 	_onscreenCheckbox->setState(ConfMan.getBool("onscreen_control", _domain));
+ 	_ignoreGameSafeAreaCheckbox->setState(ConfMan.getBool("ignore_game_safe_area", _domain));
+ 
+@@ -419,6 +451,9 @@ bool AndroidOptionsWidget::save() {
+ 	const bool inAppDomain = _domain.equalsIgnoreCase(Common::ConfigManager::kApplicationDomain);
+ 
+ 	if (_enabled) {
++		if (inAppDomain) {
++			ConfMan.setInt("gtv_mouse_speed", _mouseSpeedPopUp->getSelectedTag(), _domain);
++		}
+ 		ConfMan.setBool("onscreen_control", _onscreenCheckbox->getState(), _domain);
+ 		ConfMan.setBool("ignore_game_safe_area", _ignoreGameSafeAreaCheckbox->getState(), _domain);
+ 

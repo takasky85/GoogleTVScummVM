@@ -56,3 +56,12 @@ the start of its config file and recent system-log warnings (for startup problem
 Note: the crash reporter in 0001 used to return early when the previous run had not crashed
 without releasing the start-up latch, so the ScummVM thread never started (black screen on every
 launch with no crash in the log). It now always releases the latch.
+
+### 0005-mouse-speed-option (v2026.2.0 only)
+Adds Options > Android > "Mouse speed" (1x to 6x, default 2x). Android gives the app absolute pointer
+positions, so the movement between two mouse events is multiplied and kept inside the game area.
+
+### Game icons
+The "Add game icons to gui-icons.dat" workflow step adds the per-game icons listed in
+build/game-icons.txt (from the public scummvm-icons repository) to the bundled gui-icons.dat, so the
+launcher grid view has tiles without the large icon pack download.
