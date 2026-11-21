@@ -1,0 +1,11 @@
+status: success
+scummvm_ref: v2026.2.0
+run: https://github.com/takasky85/GoogleTVScummVM/actions/runs/44933204088
+commit: 86c9d0312e7bc5ea8ab65d20d6c452fe80f583c3
+Checking for Ogg... yes
+Checking for Vorbis... yes
+Checking for Tremor... no (Vorbis/Tremor support is mutually exclusive)
+Checking for FLAC >= 1.1.3... yes
+Checking for MAD... yes
+    C++      audio/decoders/flac.o
+    C++      audio/decoders/mp3.o

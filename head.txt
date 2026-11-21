@@ -1,0 +1,150 @@
+configure flags:  --disable-all-engines --enable-engine=scumm --disable-engine=he --disable-fluidsynth --disable-mt32emu --disable-tts --disable-cloud --disable-libcurl --disable-sdlnet --disable-translation
+Running ScummVM configure...
+Checking NDK version... 23.2.8568313
+Looking for C++ compiler... /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++
+Checking if compiler supports C++11... yes
+Checking for compiler version... clang 12.0.9, ok
+Checking if C++11 initializer_list is available... yes
+Checking if C++11 std::nullptr_t is available... yes
+Checking if C++11 alignas and alignof keywords are available... yes
+Using LLD linker... no
+Using Mold linker... no
+Using Gold linker... no
+Checking for whether C++ compiler accepts -Wglobal-constructors... yes
+Checking for whether C++ compiler accepts -Wframe-larger-than=307200... yes
+Checking for whether C++ compiler accepts -Wno-undefined-var-template... yes
+Checking for whether C++ compiler accepts -Wno-pragma-pack... yes
+Checking for whether C++ compiler accepts -Wno-address-of-packed-member... yes
+Checking endianness... little
+Alignment required... yes
+Checking host CPU architecture... ARM
+Checking hosttype... android
+Cross-compiling to android-arm-v7a
+Checking for unused components...
+   Feature CDTOONS is disabled as unused by enabled engines
+   Feature ENet is disabled as unused by enabled engines
+   Feature GIF is disabled as unused by enabled engines
+   Feature HNM is disabled as unused by enabled engines
+   Feature Indeo 3 is disabled as unused by enabled engines
+   Feature Indeo 4&5 is disabled as unused by enabled engines
+   Feature JYV1 is disabled as unused by enabled engines
+   Feature Lua is disabled as unused by enabled engines
+   Feature MFC is disabled as unused by enabled engines
+   Feature libvpx is disabled as unused by enabled engines
+   Feature libtheoradec is disabled as unused by enabled engines
+   Feature MPC is disabled as unused by enabled engines
+   Feature mpeg2 is disabled as unused by enabled engines
+   Feature QDM2 is disabled as unused by enabled engines
+   Feature Sorenson Video 1 is disabled as unused by enabled engines
+   Feature TinyGL is disabled as unused by enabled engines
+   Feature TrueMotion 1 is disabled as unused by enabled engines
+   Feature External Tracker Libraries is disabled as unused by enabled engines
+   Feature VGMTrans Soundfont audio is disabled as unused by enabled engines
+   Feature XAN is disabled as unused by enabled engines
+   Disabling MikMod and OpenMPT because Universal Tracker playback is unused by enabled engines
+...check complete
+Checking for pkg-config... yes
+Checking if host is POSIX compliant... yes
+Checking if posix_spawn is required and supported... auto
+Checking if fseeko with 64-bit off_t is supported... no
+Checking if fseeko64 is supported... no
+Checking whether to have a verbose build... no
+Checking whether building plugins was requested... no
+Checking if detection features building statically... yes
+Checking if building detection features for all engines... yes
+Checking for Ogg... yes
+Checking for TTS libraries... no
+Checking for Vorbis... yes
+Checking for Tremor... no (Vorbis/Tremor support is mutually exclusive)
+Checking for OPL2LPT... no
+Checking for RetroWave OPL3... no
+Checking for FLAC >= 1.1.3... yes
+Checking for MAD... yes
+Checking for ALSA >= 0.9... no
+Checking for libjpeg >= v6b... no
+Checking for PNG >= 1.2.8... no
+Checking for GIF >= 5.0.0... no
+Checking for libtheoradec >= 1.0... no
+Checking for libvpx >= 1.6... no
+Checking for libfaad... no
+Checking for SEQ MIDI... no
+Checking for sndio... no
+Checking for TiMidity... no
+Checking for zlib... yes
+Checking for libmpeg2 >= 0.4.0... no
+Checking for liba52... no
+Checking for libcurl... no
+Checking for Network client... Android
+Checking for libopenmpt... no
+Checking for libmikmod... no (OpenMPT/MikMod support is mutually exclusive)
+Checking for libmpcdec... no
+Checking for FluidSynth... no
+Checking for FluidLite... no
+Checking for Sonivox >= 3.6.12... no
+Checking for readline... skipping (text console disabled)
+Checking for libunity... no
+Checking for gtk... no
+Looking for freetype-config... none found!
+Checking for FreeType2... no
+Checking for OpenGL... yes (OpenGL ES 2)
+Checking for OpenGL for game... yes (OpenGL ES2)
+Checking for curl... yes
+Checking for FriBidi... no
+Test C++11 compatibility during compilation... no
+Checking for Discord RPC... no
+Checking for ImGui... no (requires FreeType2)
+Building translation support... no
+Building taskbar integration support... no
+Building system printing support... no
+Building system dialogs support... no
+Building text-to-speech support... no
+Building TinyGL support... no
+Building any 3D game... yes
+Building Bink video support... yes
+Building updates support... no
+Building cloud integration... no
+Building local web server... no
+Enabling Address Sanitizer... no
+Enabling Thread Sanitizer... no
+Enabling Undefined Behavior Sanitizer... no
+Enabling x86/amd64 SSE2... no
+Enabling x86/amd64 AVX2... no
+Enabling ARM NEON... yes
+Backend... android, 16bit color, high resolution, savegame timestamp, HQ and Edge scalers, Nuked OPL emulator
+(Android) Treating char as signed char by default
+
+Engines (builtin):
+    SCUMM [v0-v6 games]
+
+Engines Skipped:
+    SCUMM [v7 & v8 games] [HE71+ games]
+    Access 
+    ADL 
+    AGDS (Black Mirror and NiBiRu) 
+    AGI 
+    AGOS 
+    Adventure Game Studio 
+    Alcachofa 
+    American Laser Games 
+    Sanitarium 
+    Lord Avalot d'Argent 
+    Another World 
+    BAGEL 
+    Beavis and Butthead in Virtual Stupidity 
+    Blade Runner 
+    The Journeyman Project 2: Buried in Time 
+    CGE 
+    CGE2 
+    Chamber 
+    Chewy: Esc from F5 
+    Cinematique evo 1 
+    Magic Composer 
+    CRAB 
+    Cinematique evo 2 
+    Lost Eden 
+    Cryo Omni3D games 
+    Darkseed 
+    Dynamix Game Development System 
+    Macromedia Director 
+    Dungeon Master 
+    Dragon History 

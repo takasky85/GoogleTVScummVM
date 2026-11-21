@@ -1,0 +1,80 @@
+
+-- Build files have been written to: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/flac-build
+[  4%] Building C object src/share/replaygain_analysis/CMakeFiles/replaygain_analysis.dir/replaygain_analysis.c.o
+[  4%] Building C object src/share/replaygain_synthesis/CMakeFiles/replaygain_synthesis.dir/replaygain_synthesis.c.o
+[  6%] Building C object src/share/getopt/CMakeFiles/getopt.dir/getopt.c.o
+[  8%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/bitmath.c.o
+[ 10%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/bitreader.c.o
+[ 12%] Linking C static library libreplaygain_synthesis.a
+[ 14%] Building C object src/share/getopt/CMakeFiles/getopt.dir/getopt1.c.o
+[ 16%] Linking C static library libreplaygain_analysis.a
+[ 16%] Built target replaygain_synthesis
+[ 18%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/bitwriter.c.o
+[ 18%] Built target replaygain_analysis
+[ 20%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/cpu.c.o
+[ 22%] Linking C static library libgetopt.a
+[ 22%] Built target getopt
+[ 24%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/crc.c.o
+[ 26%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/fixed.c.o
+[ 28%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/fixed_intrin_sse2.c.o
+[ 30%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/fixed_intrin_ssse3.c.o
+[ 32%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/fixed_intrin_sse42.c.o
+[ 34%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/fixed_intrin_avx2.c.o
+[ 36%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/float.c.o
+[ 40%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/format.c.o
+[ 40%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/lpc.c.o
+[ 42%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/lpc_intrin_neon.c.o
+[ 44%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/lpc_intrin_sse2.c.o
+[ 46%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/lpc_intrin_sse41.c.o
+[ 48%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/lpc_intrin_avx2.c.o
+[ 51%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/lpc_intrin_fma.c.o
+[ 53%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/md5.c.o
+[ 55%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/memory.c.o
+[ 57%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/metadata_iterators.c.o
+[ 59%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/metadata_object.c.o
+[ 61%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/stream_decoder.c.o
+[ 63%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/stream_encoder.c.o
+[ 65%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/stream_encoder_intrin_sse2.c.o
+[ 67%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/stream_encoder_intrin_ssse3.c.o
+[ 69%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/stream_encoder_intrin_avx2.c.o
+[ 71%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/stream_encoder_framing.c.o
+[ 73%] Building C object src/libFLAC/CMakeFiles/FLAC.dir/window.c.o
+[ 75%] Linking C static library libFLAC.a
+[ 75%] Built target FLAC
+[ 79%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/cuesheet.c.o
+[ 79%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/alloc.c.o
+[ 83%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/file.c.o
+[ 83%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/picture.c.o
+[ 85%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/replaygain.c.o
+[ 87%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/seektable.c.o
+[ 89%] Building C object src/share/grabbag/CMakeFiles/grabbag.dir/snprintf.c.o
+[ 91%] Linking C static library libgrabbag.a
+[ 91%] Built target grabbag
+[ 95%] Building C object src/share/utf8/CMakeFiles/utf8.dir/iconvert.c.o
+[ 95%] Building C object src/share/utf8/CMakeFiles/utf8.dir/charset.c.o
+[ 97%] Building C object src/share/utf8/CMakeFiles/utf8.dir/utf8.c.o
+[100%] Linking C static library libutf8.a
+[100%] Built target utf8
+-- Install configuration: "Release"
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libFLAC.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/flac.pc
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/FLAC/targets.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/FLAC/targets-release.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/FLAC/flac-config.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/FLAC/flac-config-version.cmake
+-- Up-to-date: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/FLAC/flac-config.cmake
+-- Up-to-date: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/FLAC/flac-config-version.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/all.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/assert.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/callback.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/export.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/format.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/metadata.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/ordinals.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/stream_decoder.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC/stream_encoder.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC++/all.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC++/decoder.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC++/encoder.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC++/export.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/FLAC++/metadata.h
