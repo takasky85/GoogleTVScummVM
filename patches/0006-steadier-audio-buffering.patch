@@ -1,5 +1,5 @@
 diff --git a/backends/mixer/android/android-mixer.cpp b/backends/mixer/android/android-mixer.cpp
-index 61a57afe..8240047c 100644
+index 61a57afe..e43a162a 100644
 --- a/backends/mixer/android/android-mixer.cpp
 +++ b/backends/mixer/android/android-mixer.cpp
 @@ -23,6 +23,9 @@
@@ -12,7 +12,27 @@ index 61a57afe..8240047c 100644
  #include <time.h>
  
  #include <android/log.h>
-@@ -175,14 +178,10 @@ void AndroidMixerManagerImpl::initStream() {
+@@ -40,7 +43,7 @@ extern const char *android_log_tag;
+ 
+ class AndroidMixerManagerImpl : public AndroidMixerManager, public oboe::AudioStreamDataCallback {
+ public:
+-	AndroidMixerManagerImpl() : _chunkSize(0), _buffer(nullptr), _stream(nullptr), _latency(nullptr), _audio_thread_exit(false), _underflows(0) {}
++	AndroidMixerManagerImpl() : _chunkSize(0), _buffer(nullptr), _stream(nullptr), _latency(nullptr), _audio_thread_exit(false), _underflows(0), _consumed(0), _starved(false) {}
+ 	~AndroidMixerManagerImpl() override;
+ 
+ 	void init() override;
+@@ -80,6 +83,10 @@ private:
+ 	alignas(hardware_destructive_interference_size) std::atomic<oboe::AudioStream *> _stream;
+ 	// Written in data callback, read in mixing thread and data callback
+ 	alignas(hardware_destructive_interference_size) std::atomic<size_t> _underflows;
++	// Frames taken out of the ring buffer by the data callback (monotonic), used by the mixing thread to know the fill level
++	alignas(hardware_destructive_interference_size) std::atomic<size_t> _consumed;
++	// Set by the data callback when it ran out of data, cleared by the mixing thread
++	alignas(hardware_destructive_interference_size) std::atomic<bool> _starved;
+ 	// Written in Android threads, read/written in mixing thread
+ 	alignas(hardware_destructive_interference_size) std::atomic<bool> _plugEvent;
+ };
+@@ -175,14 +182,10 @@ void AndroidMixerManagerImpl::initStream() {
  	// Configure the RingBuffer using full buffer capacity to make sure we can provide the requested samples
  	size_t bufferCapacity = stream->getBufferCapacityInFrames();
  
@@ -25,13 +45,13 @@ index 61a57afe..8240047c 100644
 -			bufferCapacity = minCapacity;
 -		}
 +	{
-+		// Keep ~80ms of mixed audio buffered ahead: enough that Ogg Vorbis decoding or a busy CPU can't starve the output (static), small
-+		// enough that speech still starts promptly.
-+		bufferCapacity = sampleRate / 12;
++		// The ring buffer itself can hold up to 300ms. How much of it the mixing thread actually
++		// fills (the audio delay) is adaptive: see audioThreadFunc.
++		bufferCapacity = sampleRate * 3 / 10;
  	}
  
  	if (!_buffer) {
-@@ -204,7 +203,12 @@ void AndroidMixerManagerImpl::initStream() {
+@@ -204,7 +207,12 @@ void AndroidMixerManagerImpl::initStream() {
  		_mixer->setOutputBufSize(chunkSize);
  	}
  
@@ -45,7 +65,23 @@ index 61a57afe..8240047c 100644
  	_chunkSize = chunkSize;
  
  	_latency = new oboe::LatencyTuner(*stream);
-@@ -274,6 +278,9 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+@@ -234,6 +242,7 @@ oboe::DataCallbackResult AndroidMixerManagerImpl::onAudioReady(oboe::AudioStream
+ 		}
+ 		memcpy(outputData, inputData, n * sizeof(frame_t));
+ 		_buffer->consumed();
++		_consumed.fetch_add(n, std::memory_order_release);
+ 		numFrames -= n;
+ 		outputData += n;
+ 		_underflows.store(0, std::memory_order_release);
+@@ -242,6 +251,7 @@ oboe::DataCallbackResult AndroidMixerManagerImpl::onAudioReady(oboe::AudioStream
+ 	LOGD("onAudioReady: numFrames=%d/%d => underflows=%zu", numFrames, numFrames_, _underflows.load(std::memory_order_relaxed));
+ #endif
+ 	if (numFrames > 0) {
++		_starved.store(true, std::memory_order_release);
+ 		memset(outputData, 0, numFrames * sizeof(frame_t));
+ 
+ 		size_t underflows = _underflows.load(std::memory_order_relaxed);
+@@ -274,6 +284,9 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
  	AndroidMixerManagerImpl *this_ = (AndroidMixerManagerImpl *)arg;
  	Audio::MixerImpl *mixer = this_->_mixer;
  
@@ -55,7 +91,7 @@ index 61a57afe..8240047c 100644
  	std::shared_ptr<oboe::AudioStream> stream = this_->_stream_ptr;
  	this_->_stream.store(stream.get());
  
-@@ -284,8 +291,10 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+@@ -284,10 +297,27 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
  	size_t silence_count = 0;
  
  	struct timespec tv_chunk, tv_silence;
@@ -66,12 +102,96 @@ index 61a57afe..8240047c 100644
 +	if (chunkSize < minChunk) chunkSize = minChunk;
  	samples_to_ts(&tv_chunk, chunkSize, sampleRate);
  
++	// Adaptive audio delay: start with a small amount of audio buffered ahead (little delay).
++	// Every time the output runs dry while we were feeding it, buffer a bit more, up to a limit.
++	// This way a device that never glitches keeps the minimum delay, and one that does stops glitching.
++	const size_t minTarget = sampleRate / 20;       // 50ms
++	const size_t stepTarget = sampleRate / 25;      // +40ms per underrun
++	const size_t maxTarget = sampleRate / 4;        // 250ms
++	size_t targetFrames = minTarget;
++	size_t producedFrames = this_->_consumed.load(std::memory_order_acquire);
++	struct timespec tv_now;
++	int64_t lastProducedMs = 0;
++	auto nowMs = [&tv_now]() -> int64_t {
++		clock_gettime(CLOCK_MONOTONIC, &tv_now);
++		return (int64_t)tv_now.tv_sec * 1000 + tv_now.tv_nsec / 1000000;
++	};
++
  	// Variables of Android P/Q worakaround for AAudio
-@@ -301,6 +310,7 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 	bool plugWaiting = false;
+ 	struct timespec tv_plugEvent, tv_recreated;
+@@ -301,8 +331,10 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
  		stream = this_->_stream_ptr;                                   \
  		this_->_stream.store(stream.get());                            \
  		chunkSize = this_->_chunkSize / 2;                             \
 +		if (chunkSize < minChunk) chunkSize = minChunk;                \
  		samples_to_ts(&tv_chunk, chunkSize, stream->getSampleRate());  \
  		clock_gettime(CLOCK_MONOTONIC, &tv_recreated);                 \
++		producedFrames = this_->_consumed.load(std::memory_order_acquire); \
  	} while (false)
+ 
+ 
+@@ -382,10 +414,32 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 		}
+ 		// end Android P/Q workaround for AAudio not detection disconnections
+ 
++		// Did the output run dry while we were producing audio? Then we need a bigger cushion.
++		if (this_->_starved.exchange(false, std::memory_order_acq_rel)) {
++			if (started && lastProducedMs != 0 && nowMs() - lastProducedMs < 300 && targetFrames < maxTarget) {
++				targetFrames += stepTarget;
++				if (targetFrames > maxTarget) {
++					targetFrames = maxTarget;
++				}
++				LOGD("Audio underrun: now buffering %zu frames ahead", targetFrames);
++			}
++		}
++
++		// How much audio is waiting in the ring buffer?
++		size_t consumedFrames = this_->_consumed.load(std::memory_order_acquire);
++		if (producedFrames < consumedFrames) {
++			// Out of sync (stream recreated, ring buffer resized...): consider it empty
++			producedFrames = consumedFrames;
++		}
++		const size_t fillFrames = producedFrames - consumedFrames;
++
+ 		size_t req = chunkSize;
+-		frame_t *outputData = this_->_buffer->try_produce(&req);
++		frame_t *outputData = nullptr;
++		if (fillFrames < targetFrames) {
++			outputData = this_->_buffer->try_produce(&req);
++		}
+ 		if (!outputData) {
+-			// buffer is full: either we have to wait for a new slot or to restart the stream
++			// we have buffered enough (or the buffer is full): either we have to wait for a new slot or to start the stream
+ 			if (started) {
+ #ifdef OBOE_DEBUG
+ 				LOGD("Waiting for buffer space for %ld.%09ld", tv_chunk.tv_sec, tv_chunk.tv_nsec);
+@@ -405,6 +459,17 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 			continue;
+ 		}
+ 
++		// Only produce what is needed to reach the target (but at least a chunk)
++		{
++			size_t need = targetFrames - fillFrames;
++			if (need < chunkSize) {
++				need = chunkSize;
++			}
++			if (req > need) {
++				req = need;
++			}
++		}
++
+ 		// mixCallback returns a number of frames although we pass to it a buffer size in bytes
+ 		size_t n = mixer->mixCallback((byte *)outputData, req * sizeof(frame_t));
+ 
+@@ -435,6 +500,10 @@ void *AndroidMixerManagerImpl::audioThreadFunc(void *arg) {
+ 		// The callback will then fill with placeholder silence and increase the underflow count.
+ 		// We will then pause the stream below.
+ 		this_->_buffer->produced(n);
++		producedFrames += n;
++		if (n > 0) {
++			lastProducedMs = nowMs();
++		}
+ 
+ #ifdef OBOE_DEBUG
+ 		if (n > 0) {
