@@ -1,0 +1,242 @@
+diff --git a/audio/decoders/vorbis.cpp b/audio/decoders/vorbis.cpp
+index 3edcf90d..e0aedefc 100644
+--- a/audio/decoders/vorbis.cpp
++++ b/audio/decoders/vorbis.cpp
+@@ -30,6 +30,8 @@
+ #ifdef USE_VORBIS
+ 
+ #include "common/textconsole.h"
++#include "common/memstream.h"
++#include "common/bufferedstream.h"
+ #include "common/util.h"
+ 
+ namespace Audio {
+@@ -194,6 +196,30 @@ bool VorbisStream::refill() {
+ SeekableAudioStream *makeVorbisStream(
+ 	Common::SeekableReadStream *stream,
+ 	DisposeAfterUse::Flag disposeAfterUse) {
++	// Android/TV storage (FUSE) can stall on small reads, and decoding happens on the audio
++	// thread: a stall there is heard as static. Load short clips (speech, effects) fully into
++	// memory and buffer long ones (music) with big reads.
++	if (stream->pos() == 0) {
++		int64 size = stream->size();
++		if (size > 0 && size <= 8 * 1024 * 1024) {
++			byte *data = (byte *)malloc((size_t)size);
++			if (data) {
++				if (stream->read(data, (uint32)size) == (uint32)size) {
++					if (disposeAfterUse == DisposeAfterUse::YES)
++						delete stream;
++					stream = new Common::MemoryReadStream(data, (uint32)size, DisposeAfterUse::YES);
++					disposeAfterUse = DisposeAfterUse::YES;
++				} else {
++					free(data);
++					stream->seek(0);
++				}
++			}
++		}
++		if (size > 8 * 1024 * 1024) {
++			stream = Common::wrapBufferedSeekableReadStream(stream, 256 * 1024, disposeAfterUse);
++			disposeAfterUse = DisposeAfterUse::YES;
++		}
++	}
+ 	SeekableAudioStream *s = new VorbisStream(stream, disposeAfterUse);
+ 	if (s && s->endOfData()) {
+ 		delete s;
+diff --git a/backends/fs/android/android-fs-factory.cpp b/backends/fs/android/android-fs-factory.cpp
+index 0c260f98..ca6145bd 100644
+--- a/backends/fs/android/android-fs-factory.cpp
++++ b/backends/fs/android/android-fs-factory.cpp
+@@ -98,8 +98,8 @@ void AndroidFilesystemFactory::getSAFTrees(AbstractFSList &list, bool allowSAFad
+ }
+ 
+ bool AndroidFilesystemFactory::Config::getDrives(AbstractFSList &list, bool hidden) const {
+-	// For SAF
+-	_factory->getSAFTrees(list, true);
++	// For SAF. TV build: no "Add folder" entry, because the system folder picker does not work on Android TV.
++	_factory->getSAFTrees(list, false);
+ 
+ 	list.reserve(list.size() + _storages.size() / 2);
+ 
+diff --git a/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java b/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java
+index e16b6e13..17b827b4 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java
++++ b/backends/platform/android/org/scummvm/scummvm/ExternalStorage.java
+@@ -531,6 +531,23 @@ public class ExternalStorage {
+ 			}
+ 		}
+ 
++		// TV build: always offer shared storage and its Download folder as starting points.
++		// (Android 11+ no longer lists them above, and the system folder picker does not work on TV.)
++		File sharedStorage = Environment.getExternalStorageDirectory();
++		if (sharedStorage != null && sharedStorage.isDirectory()) {
++			String sharedPath = sharedStorage.getAbsolutePath();
++			if (!map.contains(sharedPath)) {
++				map.add(0, sharedPath);
++				map.add(0, "Internal storage");
++			}
++			File downloadsDir = new File(sharedStorage, "Download");
++			String downloadsPath = downloadsDir.getAbsolutePath();
++			if (downloadsDir.isDirectory() && !map.contains(downloadsPath)) {
++				map.add(0, downloadsPath);
++				map.add(0, "Downloads");
++			}
++		}
++
+ 		return map;
+ 	}
+ }
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+index 41725a0a..89a5cb94 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMActivity.java
+@@ -24,6 +24,7 @@ import android.os.Handler;
+ import android.os.Looper;
+ import android.os.Process;
+ import android.os.SystemClock;
++import android.content.ActivityNotFoundException;
+ import android.provider.DocumentsContract;
+ import android.provider.Settings;
+ import android.text.TextUtils;
+@@ -1191,6 +1192,44 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 		_scummvm_thread.start();
+ 	}
+ 
++	// TV build: Android TV has no system folder picker ("you don't have an app that can do this"),
++	// so ask for "All files access" once per launch. That lets ScummVM browse /sdcard/Download directly.
++	private boolean _askedAllFilesAccess = false;
++
++	private void ensureAllFilesAccess() {
++		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R || _askedAllFilesAccess) {
++			return;
++		}
++		if (Environment.isExternalStorageManager()) {
++			return;
++		}
++		_askedAllFilesAccess = true;
++
++		try {
++			startActivity(new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
++				Uri.parse("package:" + getPackageName())));
++			return;
++		} catch (Exception e) {
++			Log.d(ScummVM.LOG_TAG, "No per-app all-files-access screen: " + e);
++		}
++		try {
++			startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
++			return;
++		} catch (Exception e) {
++			Log.d(ScummVM.LOG_TAG, "No all-files-access screen: " + e);
++		}
++
++		// This TV has no settings screen for it. Show the one-line fix instead.
++		new AlertDialog.Builder(this)
++			.setTitle("Allow access to your games folder")
++			.setMessage("This TV has no settings screen for file access.\n\n"
++				+ "On a computer with adb, run:\n\n"
++				+ "adb shell appops set " + getPackageName() + " MANAGE_EXTERNAL_STORAGE allow\n\n"
++				+ "Then restart this app.")
++			.setPositiveButton(android.R.string.ok, null)
++			.show();
++	}
++
+ 	@Override
+ 	public void onResume() {
+ //		Log.d(ScummVM.LOG_TAG, "onResume");
+@@ -1201,6 +1240,8 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 
+ 		CompatHelpers.HideSystemStatusBar.hide(getWindow());
+ 
++		ensureAllFilesAccess();
++
+ 		if (_scummvm != null)
+ 			_scummvm.setPause(false);
+ 		//_main_surface.showSystemMouseCursor(false);
+@@ -2357,7 +2398,16 @@ public class ScummVMActivity extends Activity implements OnKeyboardVisibilityLis
+ 		Uri resultURI;
+ 		synchronized(safSyncObject) {
+ 			safRequestCode = 0;
+-			startActivityForResult(intent, REQUEST_SAF);
++			try {
++				startActivityForResult(intent, REQUEST_SAF);
++			} catch (ActivityNotFoundException e) {
++				// Android TV usually has no system folder picker.
++				Log.d(ScummVM.LOG_TAG, "No system folder picker on this device: " + e);
++				runOnUiThread(() -> Toast.makeText(ScummVMActivity.this,
++					"This TV has no folder picker. Choose Internal storage > Download instead.",
++					Toast.LENGTH_LONG).show());
++				return null;
++			}
+ 			while(safRequestCode != REQUEST_SAF) {
+ 				try {
+ 					safSyncObject.wait();
+diff --git a/dists/android/AndroidManifest.xml b/dists/android/AndroidManifest.xml
+index 5f8efb50..79cc363e 100644
+--- a/dists/android/AndroidManifest.xml
++++ b/dists/android/AndroidManifest.xml
+@@ -16,6 +16,11 @@
+ 	<uses-permission
+ 		android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+ 		tools:ignore="ScopedStorage" />
++	<!-- TV build: lets the app read game folders (such as Downloads) directly, because
++	     Android TV has no system folder picker. -->
++	<uses-permission
++		android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
++		tools:ignore="ScopedStorage" />
+ 
+ 	<uses-feature
+ 		android:name="android.hardware.audio.low_latency"
+diff --git a/gui/browser.cpp b/gui/browser.cpp
+index 7d2612c9..b3bc1869 100644
+--- a/gui/browser.cpp
++++ b/gui/browser.cpp
+@@ -86,7 +86,9 @@ BrowserDialog::BrowserDialog(const Common::U32String &title, bool dirBrowser)
+ }
+ 
+ int BrowserDialog::runModal() {
+-#if defined(USE_SYSDIALOGS)
++	// TV build (ANDROID_BACKEND): always use ScummVM's own folder browser. Android TV has no
++	// system folder picker, so the native dialog only ever shows "you don't have an app that can do this".
++#if defined(USE_SYSDIALOGS) && !defined(ANDROID_BACKEND)
+ 	// Try to use the backend browser
+ 	Common::DialogManager *dialogManager = g_system->getDialogManager();
+ 	if (dialogManager) {
+@@ -109,6 +111,24 @@ void BrowserDialog::open() {
+ 	if (ConfMan.hasKey("browser_lastpath"))
+ 		_node = Common::FSNode(ConfMan.getPath("browser_lastpath"));
+ 
++#ifdef ANDROID_BACKEND
++	// TV build: start in shared storage (normally Downloads, where game files are),
++	// unless the last used folder is already somewhere inside it.
++	{
++		Common::String last;
++		if (_node.exists())
++			last = _node.getPath().toString('/');
++		bool inSharedStorage = last.hasPrefix("/storage/emulated/") || last.hasPrefix("/sdcard");
++		if (!inSharedStorage) {
++			Common::FSNode downloads("/storage/emulated/0/Download");
++			if (!(downloads.exists() && downloads.isDirectory()))
++				downloads = Common::FSNode("/sdcard/Download");
++			if (downloads.exists() && downloads.isDirectory())
++				_node = downloads;
++		}
++	}
++#endif
++
+ 	if (!_node.isDirectory())
+ 		_node = Common::FSNode(".");
+ 
+diff --git a/gui/gui-manager.cpp b/gui/gui-manager.cpp
+index 02de69aa..24269145 100644
+--- a/gui/gui-manager.cpp
++++ b/gui/gui-manager.cpp
+@@ -127,6 +127,10 @@ void GuiManager::computeScaleFactor() {
+ 	_scaleFactor = g_system->getHiDPIScreenFactor();
+ 	if (ConfMan.hasKey("gui_scale"))
+ 		_scaleFactor *= ConfMan.getInt("gui_scale") / 100.f;
++#ifdef ANDROID_BACKEND
++	else
++		_scaleFactor *= 1.5f; // TV build: bigger text and buttons by default for large screens
++#endif
+ 
+ 	_baseHeight = (int16)((float)h / _scaleFactor);
+ 	_baseWidth = (int16)((float)w / _scaleFactor);

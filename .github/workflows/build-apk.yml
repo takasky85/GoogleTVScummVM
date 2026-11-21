@@ -5,7 +5,7 @@ on:
     inputs:
       scummvm_ref:
         description: ScummVM tag or branch to build
-        default: v2026.4.0
+        default: v2026.2.0
   push:
     branches: [main]
     paths:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
-      SCUMMVM_REF: ${{ inputs.scummvm_ref || 'v2026.4.0' }}
+      SCUMMVM_REF: ${{ inputs.scummvm_ref || 'v2026.2.0' }}
       NDK_VERSION: 23.2.8568313
       OBOE_REF: 1.9.3
       OGG_REF: v1.3.5
@@ -64,7 +64,11 @@ jobs:
       - name: Apply patches
         run: |
           shopt -s nullglob
-          for p in patches/*.patch; do
+          # Use patches/<ref>/ when it exists (the patches differ per ScummVM version), else patches/
+          DIR=patches
+          if [ -d "patches/$SCUMMVM_REF" ]; then DIR="patches/$SCUMMVM_REF"; fi
+          echo "Patch directory: $DIR"
+          for p in "$DIR"/*.patch; do
             echo "Applying $p"
             git -C scummvm apply --whitespace=nowarn "$GITHUB_WORKSPACE/$p"
           done

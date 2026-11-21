@@ -34,3 +34,10 @@ Ogg Vorbis clips up to 8 MB (Sam & Max speech lines, effects) are read fully int
 and bigger streams (music) get a 256 KB read buffer, so slow Android shared-storage reads can't stall the
 audio thread.
 
+
+
+## Which ScummVM version?
+`v2026.4.0` (and 2026.3.0) use a new Oboe-based Android audio system that crackled on the onn box.
+`v2026.2.0` is the last release with the older audio thread (JNI AudioTrack), so the workflow now builds
+that by default, with the patches in `patches/v2026.2.0/` (one combined patch: all-files access, Downloads
+browser, bigger GUI, Vorbis clip preloading). The numbered patches 0001-0007 here are for v2026.4.0.
