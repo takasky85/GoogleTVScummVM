@@ -162,6 +162,18 @@ jobs:
           mkdir build-android
           cd build-android
           FLAGS=$(grep -v '^#' ../build/configure-flags.txt | tr '\n' ' ')
+          # Drop --disable-engine=X / --enable-engine=X for engines this ScummVM version does not have
+          HELP=$(../scummvm/configure --help)
+          KEEP=""
+          for f in $FLAGS; do
+            case "$f" in
+              --disable-engine=*|--enable-engine=*)
+                e="${f#*=}"
+                if echo "$HELP" | grep -qw -- "$e"; then KEEP="$KEEP $f"; else echo "Skipping unknown engine flag $f"; fi ;;
+              *) KEEP="$KEEP $f" ;;
+            esac
+          done
+          FLAGS="$KEEP"
           echo "configure flags: $FLAGS" | tee ../build.log
           ../scummvm/configure --host=android-arm-v7a --disable-debug --enable-release $FLAGS 2>&1 | tee -a ../build.log
           # Gradle downloads its tools from Maven Central, which sometimes answers 429 (too many requests).
