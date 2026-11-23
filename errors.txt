@@ -1,0 +1,3 @@
+582:    C++      gui/error.o
+927:    C++      common/error.o
+1046: - Error and warning improvements

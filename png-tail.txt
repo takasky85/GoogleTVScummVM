@@ -1,0 +1,80 @@
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/png-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/png-build/CMakeFiles/CMakeScratch/TryCompile-ADMzcW/CMakeLists.txt:4 (project)
+
+
+CMake Deprecation Warning at /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android-legacy.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android.toolchain.cmake:55 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/png-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/png-build/CMakeFiles/CMakeScratch/TryCompile-ADMzcW/CMakeLists.txt:4 (project)
+
+
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/clang - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Building for target architecture: armv7-a
+-- Found ZLIB: /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/16/libz.so (found version "1.2.11")
+-- Found AWK program: /usr/bin/gawk
+-- Configuring done (0.1s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_POLICY_VERSION_MINIMUM
+
+
+-- Build files have been written to: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/png-build
+[  0%] Built target png_genfiles
+[  6%] Building C object CMakeFiles/png_static.dir/png.c.o
+[ 12%] Building C object CMakeFiles/png_static.dir/pngerror.c.o
+[ 18%] Building C object CMakeFiles/png_static.dir/pngget.c.o
+[ 25%] Building C object CMakeFiles/png_static.dir/pngmem.c.o
+[ 31%] Building C object CMakeFiles/png_static.dir/pngpread.c.o
+[ 37%] Building C object CMakeFiles/png_static.dir/pngread.c.o
+[ 43%] Building C object CMakeFiles/png_static.dir/pngrio.c.o
+[ 50%] Building C object CMakeFiles/png_static.dir/pngrtran.c.o
+[ 56%] Building C object CMakeFiles/png_static.dir/pngrutil.c.o
+[ 62%] Building C object CMakeFiles/png_static.dir/pngset.c.o
+[ 68%] Building C object CMakeFiles/png_static.dir/pngtrans.c.o
+[ 75%] Building C object CMakeFiles/png_static.dir/pngwio.c.o
+[ 81%] Building C object CMakeFiles/png_static.dir/pngwrite.c.o
+[ 87%] Building C object CMakeFiles/png_static.dir/pngwtran.c.o
+[ 93%] Building C object CMakeFiles/png_static.dir/pngwutil.c.o
+[100%] Linking C static library libpng16.a
+[100%] Built target png_static
+-- Install configuration: "Release"
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libpng16.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libpng.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/png.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/pngconf.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/pnglibconf.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/libpng16/png.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/libpng16/pngconf.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/libpng16/pnglibconf.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/bin/libpng-config
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/bin/libpng16-config
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/share/man/man3/libpng.3
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/share/man/man3/libpngpf.3
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/share/man/man5/png.5
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/libpng.pc
+-- Up-to-date: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/bin/libpng-config
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/libpng16.pc
+-- Up-to-date: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/bin/libpng16-config
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libpng/libpng16.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libpng/libpng16-release.cmake
+-- Up-to-date: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libpng16.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/PNG/PNGTargets.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/PNG/PNGTargets-release.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/PNG/PNGConfig.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/PNG/PNGConfigVersion.cmake

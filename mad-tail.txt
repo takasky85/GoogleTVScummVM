@@ -1,0 +1,80 @@
+make  all-recursive
+make[1]: Entering directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make[2]: Entering directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT version.lo -MD -MP -MF ".deps/version.Tpo" -c -o version.lo version.c; \
+then mv -f ".deps/version.Tpo" ".deps/version.Plo"; else rm -f ".deps/version.Tpo"; exit 1; fi
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT fixed.lo -MD -MP -MF ".deps/fixed.Tpo" -c -o fixed.lo fixed.c; \
+then mv -f ".deps/fixed.Tpo" ".deps/fixed.Plo"; else rm -f ".deps/fixed.Tpo"; exit 1; fi
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT bit.lo -MD -MP -MF ".deps/bit.Tpo" -c -o bit.lo bit.c; \
+then mv -f ".deps/bit.Tpo" ".deps/bit.Plo"; else rm -f ".deps/bit.Tpo"; exit 1; fi
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT timer.lo -MD -MP -MF ".deps/timer.Tpo" -c -o timer.lo timer.c; \
+then mv -f ".deps/timer.Tpo" ".deps/timer.Plo"; else rm -f ".deps/timer.Tpo"; exit 1; fi
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT fixed.lo -MD -MP -MF .deps/fixed.Tpo -c fixed.c -o fixed.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT timer.lo -MD -MP -MF .deps/timer.Tpo -c timer.c -o timer.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT version.lo -MD -MP -MF .deps/version.Tpo -c version.c -o version.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT bit.lo -MD -MP -MF .deps/bit.Tpo -c bit.c -o bit.o
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT stream.lo -MD -MP -MF ".deps/stream.Tpo" -c -o stream.lo stream.c; \
+then mv -f ".deps/stream.Tpo" ".deps/stream.Plo"; else rm -f ".deps/stream.Tpo"; exit 1; fi
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT frame.lo -MD -MP -MF ".deps/frame.Tpo" -c -o frame.lo frame.c; \
+then mv -f ".deps/frame.Tpo" ".deps/frame.Plo"; else rm -f ".deps/frame.Tpo"; exit 1; fi
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT synth.lo -MD -MP -MF ".deps/synth.Tpo" -c -o synth.lo synth.c; \
+then mv -f ".deps/synth.Tpo" ".deps/synth.Plo"; else rm -f ".deps/synth.Tpo"; exit 1; fi
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT decoder.lo -MD -MP -MF ".deps/decoder.Tpo" -c -o decoder.lo decoder.c; \
+then mv -f ".deps/decoder.Tpo" ".deps/decoder.Plo"; else rm -f ".deps/decoder.Tpo"; exit 1; fi
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT stream.lo -MD -MP -MF .deps/stream.Tpo -c stream.c -o stream.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT frame.lo -MD -MP -MF .deps/frame.Tpo -c frame.c -o frame.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT synth.lo -MD -MP -MF .deps/synth.Tpo -c synth.c -o synth.o
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT layer12.lo -MD -MP -MF ".deps/layer12.Tpo" -c -o layer12.lo layer12.c; \
+then mv -f ".deps/layer12.Tpo" ".deps/layer12.Plo"; else rm -f ".deps/layer12.Tpo"; exit 1; fi
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT decoder.lo -MD -MP -MF .deps/decoder.Tpo -c decoder.c -o decoder.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT layer12.lo -MD -MP -MF .deps/layer12.Tpo -c layer12.c -o layer12.o
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT layer3.lo -MD -MP -MF ".deps/layer3.Tpo" -c -o layer3.lo layer3.c; \
+then mv -f ".deps/layer3.Tpo" ".deps/layer3.Plo"; else rm -f ".deps/layer3.Tpo"; exit 1; fi
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT layer3.lo -MD -MP -MF .deps/layer3.Tpo -c layer3.c -o layer3.o
+if /bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT    -Wall  -O3 -fPIC -fomit-frame-pointer -MT huffman.lo -MD -MP -MF ".deps/huffman.Tpo" -c -o huffman.lo huffman.c; \
+then mv -f ".deps/huffman.Tpo" ".deps/huffman.Plo"; else rm -f ".deps/huffman.Tpo"; exit 1; fi
+/bin/sh ./libtool --mode=compile /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang  -O3 -fPIC -c -o imdct_l_arm.lo imdct_l_arm.S
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -DHAVE_CONFIG_H -I. -I. -I. -DFPM_64BIT -DASO_INTERLEAVE1 -DASO_IMDCT -Wall -O3 -fPIC -fomit-frame-pointer -MT huffman.lo -MD -MP -MF .deps/huffman.Tpo -c huffman.c -o huffman.o
+ /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang -O3 -fPIC -c imdct_l_arm.S -o imdct_l_arm.o
+/bin/sh ./libtool --mode=link /usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi16-clang  -Wall  -O3 -fPIC -fomit-frame-pointer   -o libmad.la -rpath /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib -version-info 2:1:2 version.lo fixed.lo bit.lo timer.lo stream.lo frame.lo synth.lo decoder.lo layer12.lo layer3.lo huffman.lo   imdct_l_arm.lo 
+mkdir .libs
+/usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar cru .libs/libmad.a  version.o fixed.o bit.o timer.o stream.o frame.o synth.o decoder.o layer12.o layer3.o huffman.o imdct_l_arm.o
+/usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib .libs/libmad.a
+creating libmad.la
+(cd .libs && rm -f libmad.la && ln -s ../libmad.la libmad.la)
+make[2]: Leaving directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make[1]: Leaving directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make  install-recursive
+make[1]: Entering directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make[2]: Entering directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make[3]: Entering directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+mkdir -p -- . /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib
+ /bin/sh ./libtool --mode=install /usr/bin/install -c  libmad.la /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libmad.la
+/usr/bin/install -c .libs/libmad.lai /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libmad.la
+/usr/bin/install -c .libs/libmad.a /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libmad.a
+/usr/local/lib/android/sdk/ndk/23.2.8568313/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ranlib /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libmad.a
+chmod 644 /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libmad.a
+PATH="$PATH:/sbin" ldconfig -n /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib
+----------------------------------------------------------------------
+Libraries have been installed in:
+   /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib
+
+If you ever happen to want to link against installed libraries
+in a given directory, LIBDIR, you must either use libtool, and
+specify the full pathname of the library, or use the `-LLIBDIR'
+flag during linking and do at least one of the following:
+   - add LIBDIR to the `LD_LIBRARY_PATH' environment variable
+     during execution
+   - add LIBDIR to the `LD_RUN_PATH' environment variable
+     during linking
+   - use the `-Wl,--rpath -Wl,LIBDIR' linker flag
+   - have your system administrator add LIBDIR to `/etc/ld.so.conf'
+
+See any operating system documentation about shared libraries for
+more information, such as the ld(1) and ld.so(8) manual pages.
+----------------------------------------------------------------------
+mkdir -p -- . /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include
+ /usr/bin/install -c -m 644 mad.h /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/mad.h
+make[3]: Leaving directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make[2]: Leaving directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'
+make[1]: Leaving directory '/home/runner/work/GoogleTVScummVM/GoogleTVScummVM/mad-src'

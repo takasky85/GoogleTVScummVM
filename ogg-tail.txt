@@ -1,0 +1,80 @@
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/CMakeScratch/TryCompile-3ZOnD7/CMakeLists.txt:5 (project)
+
+
+CMake Deprecation Warning at /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android-legacy.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android.toolchain.cmake:55 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/CMakeScratch/TryCompile-3ZOnD7/CMakeLists.txt:5 (project)
+
+
+-- Check size of long - done
+-- Check size of long long
+CMake Deprecation Warning at /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/CMakeScratch/TryCompile-7OarWT/CMakeLists.txt:5 (project)
+
+
+CMake Deprecation Warning at /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android-legacy.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android.toolchain.cmake:55 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build/CMakeFiles/CMakeScratch/TryCompile-7OarWT/CMakeLists.txt:5 (project)
+
+
+-- Check size of long long - done
+-- Configuring done (1.0s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_POLICY_VERSION_MINIMUM
+
+
+-- Build files have been written to: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/ogg-build
+[ 28%] Building C object CMakeFiles/ogg.dir/src/framing.c.o
+[ 28%] Building C object CMakeFiles/ogg.dir/src/bitwise.c.o
+[ 42%] Building C object CMakeFiles/test_bitwise.dir/src/bitwise.c.o
+[ 57%] Building C object CMakeFiles/test_framing.dir/src/framing.c.o
+[ 71%] Linking C executable test_bitwise
+[ 71%] Built target test_bitwise
+[ 85%] Linking C static library libogg.a
+[ 85%] Built target ogg
+[100%] Linking C executable test_framing
+[100%] Built target test_framing
+-- Install configuration: "Release"
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libogg.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/ogg/config_types.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/ogg/ogg.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/ogg/os_types.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Ogg/OggTargets.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Ogg/OggTargets-release.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Ogg/OggConfig.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Ogg/OggConfigVersion.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/ogg.pc

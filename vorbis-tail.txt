@@ -1,0 +1,80 @@
+-- Looking for floor in m
+CMake Deprecation Warning at /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/vorbis-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/vorbis-build/CMakeFiles/CMakeScratch/TryCompile-PgtIeI/CMakeLists.txt:5 (project)
+
+
+CMake Deprecation Warning at /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android-legacy.toolchain.cmake:35 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+Call Stack (most recent call first):
+  /usr/local/lib/android/sdk/ndk/23.2.8568313/build/cmake/android.toolchain.cmake:55 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/vorbis-build/CMakeFiles/3.31.6/CMakeSystem.cmake:6 (include)
+  /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/vorbis-build/CMakeFiles/CMakeScratch/TryCompile-PgtIeI/CMakeLists.txt:5 (project)
+
+
+-- Looking for floor in m - found
+-- Found Ogg: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libogg.a
+-- Configuring done (0.7s)
+-- Generating done (0.0s)
+CMake Warning:
+  Manually-specified variables were not used by the project:
+
+    CMAKE_POLICY_VERSION_MINIMUM
+    INSTALL_DOCS
+
+
+-- Build files have been written to: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/vorbis-build
+[  4%] Building C object lib/CMakeFiles/vorbis.dir/mdct.c.o
+[  8%] Building C object lib/CMakeFiles/vorbis.dir/smallft.c.o
+[ 12%] Building C object lib/CMakeFiles/vorbis.dir/block.c.o
+[ 16%] Building C object lib/CMakeFiles/vorbis.dir/envelope.c.o
+[ 20%] Building C object lib/CMakeFiles/vorbis.dir/window.c.o
+[ 24%] Building C object lib/CMakeFiles/vorbis.dir/lsp.c.o
+[ 28%] Building C object lib/CMakeFiles/vorbis.dir/lpc.c.o
+[ 32%] Building C object lib/CMakeFiles/vorbis.dir/analysis.c.o
+[ 36%] Building C object lib/CMakeFiles/vorbis.dir/synthesis.c.o
+[ 40%] Building C object lib/CMakeFiles/vorbis.dir/psy.c.o
+[ 44%] Building C object lib/CMakeFiles/vorbis.dir/info.c.o
+[ 48%] Building C object lib/CMakeFiles/vorbis.dir/floor1.c.o
+[ 52%] Building C object lib/CMakeFiles/vorbis.dir/floor0.c.o
+[ 56%] Building C object lib/CMakeFiles/vorbis.dir/res0.c.o
+[ 60%] Building C object lib/CMakeFiles/vorbis.dir/mapping0.c.o
+[ 64%] Building C object lib/CMakeFiles/vorbis.dir/registry.c.o
+[ 68%] Building C object lib/CMakeFiles/vorbis.dir/codebook.c.o
+[ 72%] Building C object lib/CMakeFiles/vorbis.dir/sharedbook.c.o
+[ 76%] Building C object lib/CMakeFiles/vorbis.dir/lookup.c.o
+[ 80%] Building C object lib/CMakeFiles/vorbis.dir/bitrate.c.o
+[ 84%] Linking C static library libvorbis.a
+[ 84%] Built target vorbis
+[ 88%] Building C object lib/CMakeFiles/vorbisenc.dir/vorbisenc.c.o
+[ 92%] Building C object lib/CMakeFiles/vorbisfile.dir/vorbisfile.c.o
+[ 96%] Linking C static library libvorbisfile.a
+[ 96%] Built target vorbisfile
+[100%] Linking C static library libvorbisenc.a
+[100%] Built target vorbisenc
+-- Install configuration: "Release"
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/vorbis.pc
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/vorbisenc.pc
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/pkgconfig/vorbisfile.pc
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/vorbis/codec.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/vorbis/vorbisenc.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/include/vorbis/vorbisfile.h
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libvorbis.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libvorbisenc.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/libvorbisfile.a
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Vorbis/VorbisTargets.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Vorbis/VorbisTargets-release.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Vorbis/VorbisConfig.cmake
+-- Installing: /home/runner/work/GoogleTVScummVM/GoogleTVScummVM/deps-prefix/lib/cmake/Vorbis/VorbisConfigVersion.cmake
