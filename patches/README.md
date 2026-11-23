@@ -65,3 +65,8 @@ positions, so the movement between two mouse events is multiplied and kept insid
 The "Add game icons to gui-icons.dat" workflow step adds the per-game icons listed in
 build/game-icons.txt (from the public scummvm-icons repository) to the bundled gui-icons.dat, so the
 launcher grid view has tiles without the large icon pack download.
+
+### 0006-remote-control (v2026.2.0 only)
+TV remote support: the arrow buttons move the cursor (slow at first, faster the longer they are
+held), OK = left click, channel up = right click, channel down = F5 (the game's save/load menu).
+Back still acts as Escape.

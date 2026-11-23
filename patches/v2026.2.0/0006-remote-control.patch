@@ -1,0 +1,213 @@
+diff --git a/backends/platform/android/android.h b/backends/platform/android/android.h
+index 9505ff73..563d88ed 100644
+--- a/backends/platform/android/android.h
++++ b/backends/platform/android/android.h
+@@ -169,6 +169,14 @@ private:
+ 	int _mouseRawX = 0, _mouseRawY = 0;
+ 	int _mouseVirtX100 = 0, _mouseVirtY100 = 0;
+ 	void applyMouseSpeed(int &x, int &y);
++
++	// TV build: remote control cursor (arrows move it, OK = left click)
++	volatile int _remoteHeld = 0; // bit 0 up, 1 down, 2 left, 3 right
++	volatile uint32 _remoteKeyMs = 0;
++	uint32 _remoteStartMs = 0;
++	uint32 _remoteLastMs = 0;
++	float _remoteAccX = 0.0f, _remoteAccY = 0.0f;
++	void updateRemoteCursor();
+ 	int _dpad_scale;      // Used in events.cpp
+ 	int _joystick_scale;  // TODO This seems currently unused. Is it needed?
+ //	int _fingersDown;
+diff --git a/backends/platform/android/events.cpp b/backends/platform/android/events.cpp
+index 3027ed1f..b7c61f86 100644
+--- a/backends/platform/android/events.cpp
++++ b/backends/platform/android/events.cpp
+@@ -88,6 +88,7 @@ enum {
+ 	JE_MOUSE_WHEEL_UP = 22,
+ 	JE_MOUSE_WHEEL_DOWN = 23,
+ 	JE_TV_REMOTE = 24,
++	JE_REMOTE = 25,
+ 	JE_QUIT = 0x1000,
+ 	JE_MENU = 0x1001
+ };
+@@ -422,6 +423,72 @@ void OSystem_Android::applyMouseSpeed(int &x, int &y) {
+ 	y = _mouseVirtY100 / 100;
+ }
+ 
++// TV build: moves the cursor while a remote arrow is held. The speed starts slow for precise
++// aiming and speeds up the longer the button is held. Runs on the main thread.
++void OSystem_Android::updateRemoteCursor() {
++	if (!_remoteHeld) {
++		_remoteLastMs = 0;
++		return;
++	}
++
++	uint32 now = getMillis(true);
++	// safety: Android repeats a held key about every 50 ms after a short delay, so a long silence
++	// means that we missed the key release
++	if (now - _remoteKeyMs > 2500) {
++		_remoteHeld = 0;
++		_remoteLastMs = 0;
++		return;
++	}
++
++	AndroidGraphicsManager *gm = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager);
++	if (!gm) {
++		return;
++	}
++
++	if (_remoteLastMs == 0) {
++		_remoteLastMs = now;
++		_remoteStartMs = now;
++		_remoteAccX = _remoteAccY = 0.0f;
++	}
++
++	uint32 dt = now - _remoteLastMs;
++	if (dt < 10) {
++		return;
++	}
++	_remoteLastMs = now;
++
++	Common::Rect r = gm->getActiveDrawRect();
++	float span = r.width() > 0 ? (float)r.width() : 1280.0f;
++
++	float ramp = (float)(now - _remoteStartMs) / 1500.0f;
++	if (ramp > 1.0f) {
++		ramp = 1.0f;
++	}
++	// pixels per second: 15% of the screen width at first, up to about 90% after 1.5 seconds
++	float pps = span * (0.15f + 0.75f * ramp * ramp);
++
++	int held = _remoteHeld;
++	float dx = ((held & 8) ? 1.0f : 0.0f) - ((held & 4) ? 1.0f : 0.0f);
++	float dy = ((held & 2) ? 1.0f : 0.0f) - ((held & 1) ? 1.0f : 0.0f);
++	_remoteAccX += dx * pps * dt / 1000.0f;
++	_remoteAccY += dy * pps * dt / 1000.0f;
++
++	int mx = (int)_remoteAccX;
++	int my = (int)_remoteAccY;
++	if (mx == 0 && my == 0) {
++		return;
++	}
++	_remoteAccX -= mx;
++	_remoteAccY -= my;
++
++	Common::Event ev;
++	ev.type = Common::EVENT_MOUSEMOVE;
++	ev.mouse = gm->getMousePosition();
++	ev.mouse.x += mx;
++	ev.mouse.y += my;
++	pushEvent(ev);
++}
++
+ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
+                                           int arg4, int arg5, int arg6) {
+ 	Common::Event ev0;
+@@ -717,6 +784,63 @@ void OSystem_Android::pushEvent(int type, int arg1, int arg2, int arg3,
+ 		}
+ 		break;
+ 
++	case JE_REMOTE: {
++		// TV build: arrows move the cursor, OK is the left mouse button, channel up is the
++		// right mouse button and channel down is F5 (the game's own save/load menu).
++		const bool down = (arg1 == AKEY_EVENT_ACTION_DOWN);
++		const bool up = (arg1 == AKEY_EVENT_ACTION_UP);
++		if (!down && !up) {
++			return;
++		}
++
++		int bit = 0;
++		switch (arg2) {
++		case 19: bit = 1; break; // DPAD_UP
++		case 20: bit = 2; break; // DPAD_DOWN
++		case 21: bit = 4; break; // DPAD_LEFT
++		case 22: bit = 8; break; // DPAD_RIGHT
++		default: break;
++		}
++
++		if (bit) {
++			_remoteKeyMs = getMillis(true);
++			if (down) {
++				_remoteHeld = _remoteHeld | bit;
++			} else {
++				_remoteHeld = _remoteHeld & ~bit;
++			}
++			return;
++		}
++
++		if (arg5 > 0) {
++			// ignore auto-repeat of the buttons below
++			return;
++		}
++
++		AndroidGraphicsManager *gm = dynamic_cast<AndroidGraphicsManager *>(_graphicsManager);
++		switch (arg2) {
++		case 23: // DPAD_CENTER
++			ev0.type = down ? Common::EVENT_LBUTTONDOWN : Common::EVENT_LBUTTONUP;
++			ev0.mouse = gm->getMousePosition();
++			pushEvent(ev0);
++			break;
++		case 166: // CHANNEL_UP
++			ev0.type = down ? Common::EVENT_RBUTTONDOWN : Common::EVENT_RBUTTONUP;
++			ev0.mouse = gm->getMousePosition();
++			pushEvent(ev0);
++			break;
++		case 167: // CHANNEL_DOWN
++			ev0.type = down ? Common::EVENT_KEYDOWN : Common::EVENT_KEYUP;
++			ev0.kbd.keycode = Common::KEYCODE_F5;
++			ev0.kbd.ascii = Common::ASCII_F5;
++			pushEvent(ev0);
++			break;
++		default:
++			break;
++		}
++		break;
++	}
++
+ 	case JE_TV_REMOTE:
+ 		switch (arg1) {
+ 		case AKEY_EVENT_ACTION_DOWN:
+@@ -1499,6 +1623,8 @@ bool OSystem_Android::pollEvent(Common::Event &event) {
+ 	//ENTER();
+ 
+ 	if (pthread_self() == _main_thread) {
++		updateRemoteCursor();
++
+ 		// pick up changes of the mouse speed option (ConfMan must only be used from this thread)
+ 		uint32 nowMs = getMillis(true);
+ 		if (nowMs - _mouseSpeedChecked > 500) {
+diff --git a/backends/platform/android/org/scummvm/scummvm/ScummVMEvents.java b/backends/platform/android/org/scummvm/scummvm/ScummVMEvents.java
+index cde5166a..92d464c4 100644
+--- a/backends/platform/android/org/scummvm/scummvm/ScummVMEvents.java
++++ b/backends/platform/android/org/scummvm/scummvm/ScummVMEvents.java
+@@ -52,6 +52,7 @@ public class ScummVMEvents implements
+ 	public static final int JE_MOUSE_WHEEL_UP = 22;
+ 	public static final int JE_MOUSE_WHEEL_DOWN = 23;
+ 	public static final int JE_TV_REMOTE = 24;
++	public static final int JE_REMOTE = 25; // TV build: D-pad / OK / channel buttons handled natively
+ 	public static final int JE_QUIT = 0x1000;
+ 	public static final int JE_MENU = 0x1001;
+ 
+@@ -490,8 +491,11 @@ public class ScummVMEvents implements
+ 			// We ignore these so that they can be handled by Android.
+ 			return false;
+ 
+-//		case KeyEvent.KEYCODE_CHANNEL_UP:
+-//		case KeyEvent.KEYCODE_CHANNEL_DOWN:
++		case KeyEvent.KEYCODE_CHANNEL_UP:
++		case KeyEvent.KEYCODE_CHANNEL_DOWN:
++			type = JE_REMOTE;
++			break;
++
+ 		case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD:
+ 		case KeyEvent.KEYCODE_MEDIA_REWIND:
+ 		case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+@@ -519,7 +523,8 @@ public class ScummVMEvents implements
+ 			if ((e.getFlags() & KeyEvent.FLAG_SOFT_KEYBOARD) == KeyEvent.FLAG_SOFT_KEYBOARD) {
+ 				type = JE_KEY;
+ 			} else {
+-				type = JE_GAMEPAD;
++				// TV build: the arrows and OK button move the cursor / click (see events.cpp)
++				type = JE_REMOTE;
+ 			}
+ 			break;
+ 
